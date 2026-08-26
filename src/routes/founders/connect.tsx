@@ -4,6 +4,8 @@ import { CalendarDays, CheckCircle2, Clock3, MessageSquareText, UsersRound } fro
 
 import { Footer } from "@/components/site/Footer";
 import { Navbar } from "@/components/site/Navbar";
+import { supabase } from "@/lib/supabase";
+import { getUserFacingError } from "@/lib/reliability";
 
 export const Route = createFileRoute("/founders/connect")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -15,11 +17,86 @@ export const Route = createFileRoute("/founders/connect")({
 function FounderMeetingPage() {
   const { founder } = Route.useSearch();
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setSubmitted(true);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (isSubmitting) return;
+
+    const form = event.currentTarget;
+    const values = Object.fromEntries(new FormData(form).entries());
+    const consentGiven = form.querySelector<HTMLInputElement>('input[type="checkbox"]')?.checked;
+
+    if (consentGiven !== true) {
+      setSubmitError(
+        "Please complete the required fields and consent before requesting a connection.",
+      );
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      const tableName = "founder_connection_requests";
+      const payload = {
+        name: values.name,
+        phone: values.phone,
+        email: values.email,
+        city: values.city,
+        startup_name: values.startup_name || null,
+        founder: values.founder,
+        startup_stage: values.startup_stage,
+        meeting_purpose: values.meeting_purpose,
+        context: values.context,
+        desired_outcome: values.desired_outcome,
+        preferred_date: values.preferred_date || null,
+        preferred_time: values.preferred_time || null,
+        consent_given: consentGiven,
+      };
+
+      console.info("[Founder Connection] Submit handler started");
+      console.info("[Founder Connection] Inserting into:", tableName, {
+        payloadKeys: Object.keys(payload),
+      });
+
+      const { error } = await supabase.from(tableName).insert([payload]);
+
+      if (error) {
+        throw error;
+      }
+
+      console.info("[Founder Connection] Insert succeeded:", {
+        table: tableName,
+      });
+
+      form.reset();
+      setSubmitted(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (error) {
+      const supabaseError = error as {
+        message?: unknown;
+        details?: unknown;
+        hint?: unknown;
+        code?: unknown;
+        status?: unknown;
+      };
+
+      console.error("[Founder Connection] Insert failed:", {
+        error,
+        message: supabaseError.message,
+        details: supabaseError.details,
+        hint: supabaseError.hint,
+        code: supabaseError.code,
+        status: supabaseError.status,
+      });
+      setSubmitError(
+        getUserFacingError(error, "We could not submit your connection request. Please try again."),
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   if (submitted) {
@@ -234,10 +311,16 @@ function FounderMeetingPage() {
 
                 <button
                   type="submit"
-                  className="min-h-12 rounded-full bg-blue-600 px-7 text-sm font-bold text-white transition hover:bg-blue-500 sm:w-fit"
+                  disabled={isSubmitting}
+                  className="min-h-12 rounded-full bg-blue-600 px-7 py-3 text-sm font-bold text-white transition hover:bg-blue-500 sm:w-fit"
                 >
-                  Request a meeting
+                  {isSubmitting ? "Submitting..." : "Request a meeting"}
                 </button>
+                {submitError && (
+                  <p role="alert" className="text-sm text-red-700">
+                    {submitError}
+                  </p>
+                )}
               </form>
             </section>
           </div>

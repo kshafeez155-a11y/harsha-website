@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as HubsIndexRouteImport } from './routes/hubs/index'
 import { Route as EventsIndexRouteImport } from './routes/events/index'
 import { Route as ChaptersIndexRouteImport } from './routes/chapters/index'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as StartupsRegisterRouteImport } from './routes/startups/register'
 import { Route as StartupsStartupSlugRouteImport } from './routes/startups/$startupSlug'
 import { Route as PartnerCategoryPartnerTypeRouteImport } from './routes/partner-category.$partnerType'
@@ -25,6 +26,18 @@ import { Route as EventsRegisterRouteImport } from './routes/events/register'
 import { Route as CommunityJoinRouteImport } from './routes/community/join'
 import { Route as ChaptersApplyRouteImport } from './routes/chapters/apply'
 import { Route as ChaptersChapterIdRouteImport } from './routes/chapters/$chapterId'
+import { Route as AdminStartupsRouteImport } from './routes/admin/startups'
+import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
+import { Route as AdminPitchDecksRouteImport } from './routes/admin/pitch-decks'
+import { Route as AdminPartnersRouteImport } from './routes/admin/partners'
+import { Route as AdminMessagesRouteImport } from './routes/admin/messages'
+import { Route as AdminMeetingsRouteImport } from './routes/admin/meetings'
+import { Route as AdminLoginRouteImport } from './routes/admin.login'
+import { Route as AdminFoundersRouteImport } from './routes/admin/founders'
+import { Route as AdminFounderConnectionsRouteImport } from './routes/admin/founder-connections'
+import { Route as AdminEventsRouteImport } from './routes/admin/events'
+import { Route as AdminCommunityRouteImport } from './routes/admin/community'
+import { Route as AdminChaptersRouteImport } from './routes/admin/chapters'
 
 const PartnersRoute = PartnersRouteImport.update({
   id: '/partners',
@@ -54,6 +67,11 @@ const EventsIndexRoute = EventsIndexRouteImport.update({
 const ChaptersIndexRoute = ChaptersIndexRouteImport.update({
   id: '/chapters/',
   path: '/chapters/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StartupsRegisterRoute = StartupsRegisterRouteImport.update({
@@ -107,11 +125,83 @@ const ChaptersChapterIdRoute = ChaptersChapterIdRouteImport.update({
   path: '/chapters/$chapterId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminStartupsRoute = AdminStartupsRouteImport.update({
+  id: '/admin/startups',
+  path: '/admin/startups',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminSettingsRoute = AdminSettingsRouteImport.update({
+  id: '/admin/settings',
+  path: '/admin/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminPitchDecksRoute = AdminPitchDecksRouteImport.update({
+  id: '/admin/pitch-decks',
+  path: '/admin/pitch-decks',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminPartnersRoute = AdminPartnersRouteImport.update({
+  id: '/admin/partners',
+  path: '/admin/partners',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminMessagesRoute = AdminMessagesRouteImport.update({
+  id: '/admin/messages',
+  path: '/admin/messages',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminMeetingsRoute = AdminMeetingsRouteImport.update({
+  id: '/admin/meetings',
+  path: '/admin/meetings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminLoginRoute = AdminLoginRouteImport.update({
+  id: '/admin/login',
+  path: '/admin/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminFoundersRoute = AdminFoundersRouteImport.update({
+  id: '/admin/founders',
+  path: '/admin/founders',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminFounderConnectionsRoute = AdminFounderConnectionsRouteImport.update({
+  id: '/admin/founder-connections',
+  path: '/admin/founder-connections',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminEventsRoute = AdminEventsRouteImport.update({
+  id: '/admin/events',
+  path: '/admin/events',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminCommunityRoute = AdminCommunityRouteImport.update({
+  id: '/admin/community',
+  path: '/admin/community',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminChaptersRoute = AdminChaptersRouteImport.update({
+  id: '/admin/chapters',
+  path: '/admin/chapters',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/partners': typeof PartnersRoute
+  '/admin/chapters': typeof AdminChaptersRoute
+  '/admin/community': typeof AdminCommunityRoute
+  '/admin/events': typeof AdminEventsRoute
+  '/admin/founder-connections': typeof AdminFounderConnectionsRoute
+  '/admin/founders': typeof AdminFoundersRoute
+  '/admin/login': typeof AdminLoginRoute
+  '/admin/meetings': typeof AdminMeetingsRoute
+  '/admin/messages': typeof AdminMessagesRoute
+  '/admin/partners': typeof AdminPartnersRoute
+  '/admin/pitch-decks': typeof AdminPitchDecksRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/startups': typeof AdminStartupsRoute
   '/chapters/$chapterId': typeof ChaptersChapterIdRoute
   '/chapters/apply': typeof ChaptersApplyRoute
   '/community/join': typeof CommunityJoinRoute
@@ -122,6 +212,7 @@ export interface FileRoutesByFullPath {
   '/partner-category/$partnerType': typeof PartnerCategoryPartnerTypeRoute
   '/startups/$startupSlug': typeof StartupsStartupSlugRoute
   '/startups/register': typeof StartupsRegisterRoute
+  '/admin/': typeof AdminIndexRoute
   '/chapters/': typeof ChaptersIndexRoute
   '/events/': typeof EventsIndexRoute
   '/hubs/': typeof HubsIndexRoute
@@ -130,6 +221,18 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/partners': typeof PartnersRoute
+  '/admin/chapters': typeof AdminChaptersRoute
+  '/admin/community': typeof AdminCommunityRoute
+  '/admin/events': typeof AdminEventsRoute
+  '/admin/founder-connections': typeof AdminFounderConnectionsRoute
+  '/admin/founders': typeof AdminFoundersRoute
+  '/admin/login': typeof AdminLoginRoute
+  '/admin/meetings': typeof AdminMeetingsRoute
+  '/admin/messages': typeof AdminMessagesRoute
+  '/admin/partners': typeof AdminPartnersRoute
+  '/admin/pitch-decks': typeof AdminPitchDecksRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/startups': typeof AdminStartupsRoute
   '/chapters/$chapterId': typeof ChaptersChapterIdRoute
   '/chapters/apply': typeof ChaptersApplyRoute
   '/community/join': typeof CommunityJoinRoute
@@ -140,6 +243,7 @@ export interface FileRoutesByTo {
   '/partner-category/$partnerType': typeof PartnerCategoryPartnerTypeRoute
   '/startups/$startupSlug': typeof StartupsStartupSlugRoute
   '/startups/register': typeof StartupsRegisterRoute
+  '/admin': typeof AdminIndexRoute
   '/chapters': typeof ChaptersIndexRoute
   '/events': typeof EventsIndexRoute
   '/hubs': typeof HubsIndexRoute
@@ -149,6 +253,18 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/partners': typeof PartnersRoute
+  '/admin/chapters': typeof AdminChaptersRoute
+  '/admin/community': typeof AdminCommunityRoute
+  '/admin/events': typeof AdminEventsRoute
+  '/admin/founder-connections': typeof AdminFounderConnectionsRoute
+  '/admin/founders': typeof AdminFoundersRoute
+  '/admin/login': typeof AdminLoginRoute
+  '/admin/meetings': typeof AdminMeetingsRoute
+  '/admin/messages': typeof AdminMessagesRoute
+  '/admin/partners': typeof AdminPartnersRoute
+  '/admin/pitch-decks': typeof AdminPitchDecksRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/startups': typeof AdminStartupsRoute
   '/chapters/$chapterId': typeof ChaptersChapterIdRoute
   '/chapters/apply': typeof ChaptersApplyRoute
   '/community/join': typeof CommunityJoinRoute
@@ -159,6 +275,7 @@ export interface FileRoutesById {
   '/partner-category/$partnerType': typeof PartnerCategoryPartnerTypeRoute
   '/startups/$startupSlug': typeof StartupsStartupSlugRoute
   '/startups/register': typeof StartupsRegisterRoute
+  '/admin/': typeof AdminIndexRoute
   '/chapters/': typeof ChaptersIndexRoute
   '/events/': typeof EventsIndexRoute
   '/hubs/': typeof HubsIndexRoute
@@ -169,6 +286,18 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/partners'
+    | '/admin/chapters'
+    | '/admin/community'
+    | '/admin/events'
+    | '/admin/founder-connections'
+    | '/admin/founders'
+    | '/admin/login'
+    | '/admin/meetings'
+    | '/admin/messages'
+    | '/admin/partners'
+    | '/admin/pitch-decks'
+    | '/admin/settings'
+    | '/admin/startups'
     | '/chapters/$chapterId'
     | '/chapters/apply'
     | '/community/join'
@@ -179,6 +308,7 @@ export interface FileRouteTypes {
     | '/partner-category/$partnerType'
     | '/startups/$startupSlug'
     | '/startups/register'
+    | '/admin/'
     | '/chapters/'
     | '/events/'
     | '/hubs/'
@@ -187,6 +317,18 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/partners'
+    | '/admin/chapters'
+    | '/admin/community'
+    | '/admin/events'
+    | '/admin/founder-connections'
+    | '/admin/founders'
+    | '/admin/login'
+    | '/admin/meetings'
+    | '/admin/messages'
+    | '/admin/partners'
+    | '/admin/pitch-decks'
+    | '/admin/settings'
+    | '/admin/startups'
     | '/chapters/$chapterId'
     | '/chapters/apply'
     | '/community/join'
@@ -197,6 +339,7 @@ export interface FileRouteTypes {
     | '/partner-category/$partnerType'
     | '/startups/$startupSlug'
     | '/startups/register'
+    | '/admin'
     | '/chapters'
     | '/events'
     | '/hubs'
@@ -205,6 +348,18 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/partners'
+    | '/admin/chapters'
+    | '/admin/community'
+    | '/admin/events'
+    | '/admin/founder-connections'
+    | '/admin/founders'
+    | '/admin/login'
+    | '/admin/meetings'
+    | '/admin/messages'
+    | '/admin/partners'
+    | '/admin/pitch-decks'
+    | '/admin/settings'
+    | '/admin/startups'
     | '/chapters/$chapterId'
     | '/chapters/apply'
     | '/community/join'
@@ -215,6 +370,7 @@ export interface FileRouteTypes {
     | '/partner-category/$partnerType'
     | '/startups/$startupSlug'
     | '/startups/register'
+    | '/admin/'
     | '/chapters/'
     | '/events/'
     | '/hubs/'
@@ -224,6 +380,18 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   PartnersRoute: typeof PartnersRoute
+  AdminChaptersRoute: typeof AdminChaptersRoute
+  AdminCommunityRoute: typeof AdminCommunityRoute
+  AdminEventsRoute: typeof AdminEventsRoute
+  AdminFounderConnectionsRoute: typeof AdminFounderConnectionsRoute
+  AdminFoundersRoute: typeof AdminFoundersRoute
+  AdminLoginRoute: typeof AdminLoginRoute
+  AdminMeetingsRoute: typeof AdminMeetingsRoute
+  AdminMessagesRoute: typeof AdminMessagesRoute
+  AdminPartnersRoute: typeof AdminPartnersRoute
+  AdminPitchDecksRoute: typeof AdminPitchDecksRoute
+  AdminSettingsRoute: typeof AdminSettingsRoute
+  AdminStartupsRoute: typeof AdminStartupsRoute
   ChaptersChapterIdRoute: typeof ChaptersChapterIdRoute
   ChaptersApplyRoute: typeof ChaptersApplyRoute
   CommunityJoinRoute: typeof CommunityJoinRoute
@@ -234,6 +402,7 @@ export interface RootRouteChildren {
   PartnerCategoryPartnerTypeRoute: typeof PartnerCategoryPartnerTypeRoute
   StartupsStartupSlugRoute: typeof StartupsStartupSlugRoute
   StartupsRegisterRoute: typeof StartupsRegisterRoute
+  AdminIndexRoute: typeof AdminIndexRoute
   ChaptersIndexRoute: typeof ChaptersIndexRoute
   EventsIndexRoute: typeof EventsIndexRoute
   HubsIndexRoute: typeof HubsIndexRoute
@@ -281,6 +450,13 @@ declare module '@tanstack/react-router' {
       path: '/chapters'
       fullPath: '/chapters/'
       preLoaderRoute: typeof ChaptersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/startups/register': {
@@ -353,6 +529,90 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ChaptersChapterIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/startups': {
+      id: '/admin/startups'
+      path: '/admin/startups'
+      fullPath: '/admin/startups'
+      preLoaderRoute: typeof AdminStartupsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/settings': {
+      id: '/admin/settings'
+      path: '/admin/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AdminSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/pitch-decks': {
+      id: '/admin/pitch-decks'
+      path: '/admin/pitch-decks'
+      fullPath: '/admin/pitch-decks'
+      preLoaderRoute: typeof AdminPitchDecksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/partners': {
+      id: '/admin/partners'
+      path: '/admin/partners'
+      fullPath: '/admin/partners'
+      preLoaderRoute: typeof AdminPartnersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/messages': {
+      id: '/admin/messages'
+      path: '/admin/messages'
+      fullPath: '/admin/messages'
+      preLoaderRoute: typeof AdminMessagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/meetings': {
+      id: '/admin/meetings'
+      path: '/admin/meetings'
+      fullPath: '/admin/meetings'
+      preLoaderRoute: typeof AdminMeetingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/login': {
+      id: '/admin/login'
+      path: '/admin/login'
+      fullPath: '/admin/login'
+      preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/founders': {
+      id: '/admin/founders'
+      path: '/admin/founders'
+      fullPath: '/admin/founders'
+      preLoaderRoute: typeof AdminFoundersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/founder-connections': {
+      id: '/admin/founder-connections'
+      path: '/admin/founder-connections'
+      fullPath: '/admin/founder-connections'
+      preLoaderRoute: typeof AdminFounderConnectionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/events': {
+      id: '/admin/events'
+      path: '/admin/events'
+      fullPath: '/admin/events'
+      preLoaderRoute: typeof AdminEventsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/community': {
+      id: '/admin/community'
+      path: '/admin/community'
+      fullPath: '/admin/community'
+      preLoaderRoute: typeof AdminCommunityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/chapters': {
+      id: '/admin/chapters'
+      path: '/admin/chapters'
+      fullPath: '/admin/chapters'
+      preLoaderRoute: typeof AdminChaptersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -360,6 +620,18 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   PartnersRoute: PartnersRoute,
+  AdminChaptersRoute: AdminChaptersRoute,
+  AdminCommunityRoute: AdminCommunityRoute,
+  AdminEventsRoute: AdminEventsRoute,
+  AdminFounderConnectionsRoute: AdminFounderConnectionsRoute,
+  AdminFoundersRoute: AdminFoundersRoute,
+  AdminLoginRoute: AdminLoginRoute,
+  AdminMeetingsRoute: AdminMeetingsRoute,
+  AdminMessagesRoute: AdminMessagesRoute,
+  AdminPartnersRoute: AdminPartnersRoute,
+  AdminPitchDecksRoute: AdminPitchDecksRoute,
+  AdminSettingsRoute: AdminSettingsRoute,
+  AdminStartupsRoute: AdminStartupsRoute,
   ChaptersChapterIdRoute: ChaptersChapterIdRoute,
   ChaptersApplyRoute: ChaptersApplyRoute,
   CommunityJoinRoute: CommunityJoinRoute,
@@ -370,6 +642,7 @@ const rootRouteChildren: RootRouteChildren = {
   PartnerCategoryPartnerTypeRoute: PartnerCategoryPartnerTypeRoute,
   StartupsStartupSlugRoute: StartupsStartupSlugRoute,
   StartupsRegisterRoute: StartupsRegisterRoute,
+  AdminIndexRoute: AdminIndexRoute,
   ChaptersIndexRoute: ChaptersIndexRoute,
   EventsIndexRoute: EventsIndexRoute,
   HubsIndexRoute: HubsIndexRoute,

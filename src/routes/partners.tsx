@@ -12,6 +12,8 @@ import {
 
 import { Footer } from "@/components/site/Footer";
 import { Navbar } from "@/components/site/Navbar";
+import { supabase } from "@/lib/supabase";
+import { getUserFacingError } from "@/lib/reliability";
 
 export const Route = createFileRoute("/partners")({
   component: PartnersPage,
@@ -42,11 +44,59 @@ const partnerTypes = [
 
 function PartnersPage() {
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setSubmitted(true);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (isSubmitting) return;
+
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const values = Object.fromEntries(formData.entries());
+    const consentGiven = form.querySelector<HTMLInputElement>('input[type="checkbox"]')?.checked;
+
+    if (consentGiven !== true) {
+      setSubmitError("Please complete the required fields and consent before submitting.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      const { error } = await supabase.from("partner_applications").insert({
+        name: values.name,
+        email: values.email,
+        phone: values.phone,
+        organization: values.organization,
+        location: values.location,
+        website: values.website || null,
+        organization_type: values.organization_type,
+        partnership_interest: values.partnership_interest,
+        contribution: values.contribution,
+        goal: values.goal,
+        community_reach: values.community_reach || null,
+        ecosystem_experience: values.ecosystem_experience || null,
+        consent_given: consentGiven,
+      });
+
+      if (error) throw error;
+
+      form.reset();
+      setSubmitted(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (error) {
+      console.error("[Partner application] Supabase insert failed", error);
+      setSubmitError(
+        getUserFacingError(
+          error,
+          "We could not submit your partnership application. Please try again.",
+        ),
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -318,10 +368,16 @@ function PartnersPage() {
 
                         <button
                           type="submit"
+                          disabled={isSubmitting}
                           className="min-h-12 w-full rounded-full bg-blue-600 px-7 text-sm font-black text-white transition hover:bg-blue-500 sm:w-fit"
                         >
-                          Submit partnership interest
+                          {isSubmitting ? "Submitting..." : "Submit partnership interest"}
                         </button>
+                        {submitError && (
+                          <p role="alert" className="text-sm text-red-700">
+                            {submitError}
+                          </p>
+                        )}
                       </form>
                     </>
                   )}

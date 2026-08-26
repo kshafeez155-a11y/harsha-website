@@ -4,6 +4,8 @@ import { CheckCircle2, MapPinned, Rocket, UsersRound } from "lucide-react";
 
 import { Footer } from "@/components/site/Footer";
 import { Navbar } from "@/components/site/Navbar";
+import { supabase } from "@/lib/supabase";
+import { getUserFacingError } from "@/lib/reliability";
 
 export const Route = createFileRoute("/chapters/apply")({
   component: ChapterApplicationPage,
@@ -11,11 +13,89 @@ export const Route = createFileRoute("/chapters/apply")({
 
 function ChapterApplicationPage() {
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setSubmitted(true);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    if (isSubmitting) return;
+
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const name = formData.get("name");
+    const phone = formData.get("phone");
+    const email = formData.get("email");
+    const city = formData.get("city");
+    const district = formData.get("district");
+    const profession = formData.get("profession");
+    const organization = formData.get("organization");
+    const linkedin = formData.get("linkedin");
+    const entrepreneurshipExperience = formData.get("entrepreneurship_experience");
+    const weeklyCommitment = formData.get("weekly_commitment");
+    const motivation = formData.get("motivation");
+    const cityEcosystem = formData.get("city_ecosystem");
+    const firstMeetupPlan = formData.get("first_meetup_plan");
+    const communityReach = formData.get("community_reach");
+    const consentGiven = form.querySelector<HTMLInputElement>('input[type="checkbox"]')?.checked;
+
+    if (
+      typeof name !== "string" ||
+      typeof phone !== "string" ||
+      typeof email !== "string" ||
+      typeof city !== "string" ||
+      typeof district !== "string" ||
+      typeof profession !== "string" ||
+      typeof entrepreneurshipExperience !== "string" ||
+      typeof weeklyCommitment !== "string" ||
+      typeof motivation !== "string" ||
+      typeof cityEcosystem !== "string" ||
+      typeof firstMeetupPlan !== "string" ||
+      consentGiven !== true
+    ) {
+      setSubmitError("Please complete the required fields and consent before submitting.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      const { error } = await supabase.from("chapter_applications").insert({
+        name,
+        phone,
+        email,
+        city,
+        district,
+        profession,
+        organization: typeof organization === "string" && organization ? organization : null,
+        linkedin: typeof linkedin === "string" && linkedin ? linkedin : null,
+        entrepreneurship_experience: entrepreneurshipExperience,
+        weekly_commitment: weeklyCommitment,
+        motivation,
+        city_ecosystem: cityEcosystem,
+        first_meetup_plan: firstMeetupPlan,
+        community_reach:
+          typeof communityReach === "string" && communityReach ? communityReach : null,
+        consent_given: consentGiven,
+      });
+
+      if (error) throw error;
+
+      form.reset();
+      setSubmitted(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (error) {
+      console.error("[Chapter application] Supabase insert failed", error);
+      setSubmitError(
+        getUserFacingError(
+          error,
+          "We could not submit your chapter application. Please try again.",
+        ),
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   if (submitted) {
@@ -228,11 +308,18 @@ function ChapterApplicationPage() {
 
                 <button
                   type="submit"
+                  disabled={isSubmitting}
                   className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-blue-600 px-7 text-sm font-bold text-white transition hover:bg-blue-500 sm:w-fit"
                 >
                   <Rocket className="h-4 w-4" />
-                  Submit chapter application
+                  {isSubmitting ? "Submitting..." : "Submit chapter application"}
                 </button>
+
+                {submitError && (
+                  <p role="alert" className="text-sm text-red-700">
+                    {submitError}
+                  </p>
+                )}
               </form>
             </section>
           </div>

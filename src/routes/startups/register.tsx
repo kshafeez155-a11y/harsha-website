@@ -4,6 +4,8 @@ import { CheckCircle2, Rocket } from "lucide-react";
 
 import { Navbar } from "@/components/site/Navbar";
 import { Footer } from "@/components/site/Footer";
+import { supabase } from "@/lib/supabase";
+import { getUserFacingError } from "@/lib/reliability";
 
 export const Route = createFileRoute("/startups/register")({
   component: StartupRegistrationPage,
@@ -11,10 +13,100 @@ export const Route = createFileRoute("/startups/register")({
 
 function StartupRegistrationPage() {
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setSubmitted(true);
+
+    if (isSubmitting) return;
+
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const startupName = formData.get("startup_name");
+    const founderName = formData.get("founder_name");
+    const problem = formData.get("problem");
+    const solution = formData.get("solution");
+    const startupStage = formData.get("startup_stage");
+    const website = formData.get("website");
+    const linkedin = formData.get("linkedin");
+    const phone = formData.get("phone");
+    const email = formData.get("email");
+    const pitchDeck = formData.get("pitch_deck");
+    const consentGiven = form.querySelector<HTMLInputElement>('input[type="checkbox"]')?.checked;
+
+    if (
+      typeof startupName !== "string" ||
+      typeof founderName !== "string" ||
+      typeof problem !== "string" ||
+      typeof solution !== "string" ||
+      typeof startupStage !== "string" ||
+      typeof phone !== "string" ||
+      typeof email !== "string" ||
+      !(pitchDeck instanceof File) ||
+      pitchDeck.size === 0 ||
+      pitchDeck.type !== "application/pdf" ||
+      pitchDeck.size > 10 * 1024 * 1024 ||
+      consentGiven !== true
+    ) {
+      setSubmitError(
+        "Please choose a PDF pitch deck smaller than 10 MB and complete all required fields.",
+      );
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError(null);
+    let uploadedPitchDeckPath: string | null = null;
+
+    try {
+      uploadedPitchDeckPath = `intake/${crypto.randomUUID()}.pdf`;
+      const { error: uploadError } = await supabase.storage
+        .from("pitch-decks")
+        .upload(uploadedPitchDeckPath, pitchDeck, {
+          cacheControl: "3600",
+          contentType: "application/pdf",
+          upsert: false,
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { error } = await supabase.from("startup_registrations").insert({
+        startup_name: startupName,
+        founder_name: founderName,
+        problem,
+        solution,
+        startup_stage: startupStage,
+        website: typeof website === "string" && website ? website : null,
+        linkedin: typeof linkedin === "string" && linkedin ? linkedin : null,
+        phone,
+        email,
+        pitch_deck_path: uploadedPitchDeckPath,
+        consent_given: consentGiven,
+      });
+
+      if (error) throw error;
+
+      form.reset();
+      setSubmitted(true);
+    } catch (error) {
+      console.error("[Startup registration] Supabase insert failed", error);
+      if (uploadedPitchDeckPath) {
+        const { error: cleanupError } = await supabase.storage
+          .from("pitch-decks")
+          .remove([uploadedPitchDeckPath]);
+        if (cleanupError)
+          console.error("[Startup registration] Pitch deck cleanup failed", cleanupError);
+      }
+      setSubmitError(
+        getUserFacingError(
+          error,
+          "We could not submit your startup registration. Please try again.",
+        ),
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -233,10 +325,17 @@ function StartupRegistrationPage() {
 
                 <button
                   type="submit"
+                  disabled={isSubmitting}
                   className="min-h-12 rounded-full bg-blue-600 px-7 text-sm font-bold text-white transition hover:bg-blue-500 sm:w-fit"
                 >
-                  Submit startup
+                  {isSubmitting ? "Submitting..." : "Submit startup"}
                 </button>
+
+                {submitError && (
+                  <p role="alert" className="text-sm text-red-700">
+                    {submitError}
+                  </p>
+                )}
               </form>
             </section>
           </div>

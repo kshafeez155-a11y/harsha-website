@@ -1,4 +1,8 @@
+import { useState, type FormEvent } from "react";
 import { Mail, MapPin, MessageCircle, Phone } from "lucide-react";
+
+import { supabase } from "@/lib/supabase";
+import { getUserFacingError } from "@/lib/reliability";
 
 const contactDetails = [
   {
@@ -19,6 +23,53 @@ const contactDetails = [
 ];
 
 export function Contact() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [feedback, setFeedback] = useState<"success" | string | null>(null);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (isSubmitting) return;
+
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const contactName = formData.get("contact-name");
+    const contactPhone = formData.get("contact-phone");
+    const contactEmail = formData.get("contact-email");
+    const message = formData.get("message");
+
+    if (
+      typeof contactName !== "string" ||
+      typeof contactPhone !== "string" ||
+      typeof contactEmail !== "string" ||
+      typeof message !== "string"
+    ) {
+      setFeedback("Please complete all required fields before sending your message.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setFeedback(null);
+
+    try {
+      const { error } = await supabase.from("contact_submissions").insert({
+        contact_name: contactName,
+        contact_phone: contactPhone,
+        contact_email: contactEmail,
+        message,
+      });
+
+      if (error) throw error;
+
+      form.reset();
+      setFeedback("success");
+    } catch (error) {
+      console.error("[Contact] Supabase insert failed", error);
+      setFeedback(getUserFacingError(error, "We could not send your message. Please try again."));
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   return (
     <section
       id="contact"
@@ -75,7 +126,7 @@ export function Contact() {
 
             {/* Contact form */}
             <div className="p-6 sm:p-10 lg:p-12">
-              <form className="grid gap-5" onSubmit={(event) => event.preventDefault()}>
+              <form className="grid gap-5" onSubmit={handleSubmit}>
                 <div className="grid gap-5 sm:grid-cols-2">
                   <FormField
                     id="contact-name"
@@ -116,10 +167,20 @@ export function Contact() {
 
                 <button
                   type="submit"
+                  disabled={isSubmitting}
                   className="min-h-12 rounded-full bg-blue-600 px-7 py-3 text-sm font-bold text-white transition hover:bg-blue-500 sm:w-fit"
                 >
-                  Send message
+                  {isSubmitting ? "Sending..." : "Send message"}
                 </button>
+
+                <p
+                  aria-live="polite"
+                  className={
+                    feedback === "success" ? "text-sm text-green-700" : "text-sm text-red-700"
+                  }
+                >
+                  {feedback === "success" ? "Your message was sent successfully." : feedback}
+                </p>
               </form>
             </div>
           </div>

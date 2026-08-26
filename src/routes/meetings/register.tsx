@@ -5,6 +5,8 @@ import { CalendarCheck2, CheckCircle2, Clock3, MapPin } from "lucide-react";
 import { Footer } from "@/components/site/Footer";
 import { Navbar } from "@/components/site/Navbar";
 import { getChapter, getMeeting } from "@/data/chapterData";
+import { supabase } from "@/lib/supabase";
+import { getUserFacingError } from "@/lib/reliability";
 
 export const Route = createFileRoute("/meetings/register")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -18,6 +20,8 @@ function MeetingRegistrationPage() {
   const selectedMeeting = getMeeting(meetingId);
   const chapter = selectedMeeting ? getChapter(selectedMeeting.chapterSlug) : undefined;
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   if (!selectedMeeting || selectedMeeting.status !== "upcoming") {
     return (
@@ -41,10 +45,64 @@ function MeetingRegistrationPage() {
     );
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setSubmitted(true);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    if (isSubmitting) return;
+
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const name = formData.get("name");
+    const phone = formData.get("phone");
+    const email = formData.get("email");
+    const city = formData.get("city");
+    const role = formData.get("role");
+    const purpose = formData.get("purpose");
+    const consentGiven = form.querySelector<HTMLInputElement>('input[type="checkbox"]')?.checked;
+
+    if (
+      typeof name !== "string" ||
+      typeof phone !== "string" ||
+      typeof email !== "string" ||
+      typeof city !== "string" ||
+      typeof role !== "string" ||
+      typeof purpose !== "string" ||
+      consentGiven !== true
+    ) {
+      setSubmitError("Please complete the required fields and consent before registering.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      const { error } = await supabase.from("meeting_registrations").insert({
+        name,
+        phone,
+        email,
+        city,
+        role,
+        purpose,
+        consent_given: consentGiven,
+      });
+
+      if (error) throw error;
+
+      form.reset();
+      setSubmitted(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (error) {
+      console.error("[Meeting registration] Supabase insert failed", error);
+      setSubmitError(
+        getUserFacingError(
+          error,
+          "We could not complete your meeting registration. Please try again.",
+        ),
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -192,10 +250,16 @@ function MeetingRegistrationPage() {
 
                     <button
                       type="submit"
+                      disabled={isSubmitting}
                       className="min-h-12 rounded-full bg-blue-600 px-7 text-sm font-black text-white transition hover:bg-blue-500 sm:w-fit"
                     >
-                      Complete Registration
+                      {isSubmitting ? "Registering..." : "Complete Registration"}
                     </button>
+                    {submitError && (
+                      <p role="alert" className="text-sm text-red-700">
+                        {submitError}
+                      </p>
+                    )}
                   </form>
                 </>
               )}
