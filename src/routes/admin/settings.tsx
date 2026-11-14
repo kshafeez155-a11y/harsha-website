@@ -16,6 +16,7 @@ import { requireAdmin } from "@/components/admin/admin-auth";
 import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/admin/settings")({
+  ssr: false,
   beforeLoad: requireAdmin,
   component: AdminSettingsPage,
 });

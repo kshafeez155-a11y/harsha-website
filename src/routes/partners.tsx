@@ -12,7 +12,7 @@ import {
 
 import { Footer } from "@/components/site/Footer";
 import { Navbar } from "@/components/site/Navbar";
-import { supabase } from "@/lib/supabase";
+import { publicSupabase } from "@/lib/supabase";
 import { getUserFacingError } from "@/lib/reliability";
 
 export const Route = createFileRoute("/partners")({
@@ -65,7 +65,7 @@ function PartnersPage() {
     setSubmitError(null);
 
     try {
-      const { error } = await supabase.from("partner_applications").insert({
+      const { error } = await publicSupabase.from("partner_applications").insert({
         name: values.name,
         email: values.email,
         phone: values.phone,
@@ -227,8 +227,8 @@ function PartnersPage() {
                       <h2 className="mt-3 text-3xl font-black">Start the conversation</h2>
 
                       <p className="mt-3 leading-7 text-slate-600">
-                        Fields marked by the browser as required must be completed. Connect this
-                        form to Supabase before launch.
+                        Complete the required fields so our team can review your partnership
+                        proposal.
                       </p>
 
                       <form onSubmit={handleSubmit} className="mt-8 grid gap-5">
@@ -287,20 +287,12 @@ function PartnersPage() {
                           />
                         </div>
 
-                        <SelectField
+                        <Field
                           id="partner-type"
                           name="organization_type"
                           label="Organization type"
-                          options={[
-                            "Incubator or accelerator",
-                            "Technology company",
-                            "College or university",
-                            "Investor network",
-                            "Community or NGO",
-                            "Government or public body",
-                            "Service provider",
-                            "Other",
-                          ]}
+                          type="text"
+                          placeholder="Enter your organization type"
                         />
 
                         <SelectField

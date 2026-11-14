@@ -5,7 +5,7 @@ import { CalendarCheck2, CheckCircle2, Clock3, MapPin } from "lucide-react";
 import { Footer } from "@/components/site/Footer";
 import { Navbar } from "@/components/site/Navbar";
 import { getChapter, getMeeting } from "@/data/chapterData";
-import { supabase } from "@/lib/supabase";
+import { publicSupabase } from "@/lib/supabase";
 import { getUserFacingError } from "@/lib/reliability";
 
 export const Route = createFileRoute("/meetings/register")({
@@ -77,7 +77,7 @@ function MeetingRegistrationPage() {
     setSubmitError(null);
 
     try {
-      const { error } = await supabase.from("meeting_registrations").insert({
+      const { error } = await publicSupabase.from("meeting_registrations").insert({
         name,
         phone,
         email,

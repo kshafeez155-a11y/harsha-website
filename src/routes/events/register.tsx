@@ -5,7 +5,7 @@ import { CalendarCheck2, CheckCircle2, Clock3, MapPin } from "lucide-react";
 import { Footer } from "@/components/site/Footer";
 import { Navbar } from "@/components/site/Navbar";
 import { hubEvents, hubs } from "@/data/siteData";
-import { supabase } from "@/lib/supabase";
+import { publicSupabase } from "@/lib/supabase";
 import { getUserFacingError } from "@/lib/reliability";
 
 export const Route = createFileRoute("/events/register")({
@@ -53,7 +53,7 @@ function EventRegistrationPage() {
     setSubmitError(null);
 
     try {
-      const { error } = await supabase.from("event_registrations").insert({
+      const { error } = await publicSupabase.from("event_registrations").insert({
         name,
         phone,
         email,
@@ -139,8 +139,7 @@ function EventRegistrationPage() {
                   </p>
                   <h2 className="mt-3 text-3xl font-black">Reserve your place</h2>
                   <p className="mt-3 leading-7 text-slate-600">
-                    Complete the required details. Connect this form to Supabase before production
-                    to save submissions.
+                    Complete the required details to reserve your place and help us prepare.
                   </p>
                   <form onSubmit={handleSubmit} className="mt-8 grid gap-5">
                     <Field

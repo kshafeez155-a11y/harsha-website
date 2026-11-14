@@ -1,5 +1,7 @@
 import { ArrowRight, Building2, MapPin, Rocket, UserRound } from "lucide-react";
 
+import { getStartupStory } from "@/data/startupStories";
+
 const startupStages = [
   "All Startups",
   "Idea Stage",
@@ -9,16 +11,35 @@ const startupStages = [
   "Funded",
 ];
 
-const startups = [
-  {
-    name: "Startup One",
-    founder: "Founder Name",
-    description: "A short description explaining the problem this startup is solving.",
-    city: "Proddatur",
-    industry: "SaaS",
-    stage: "MVP",
-    logo: "",
-  },
+type StartupCard = {
+  name: string;
+  founder: string;
+  description: string;
+  city: string;
+  industry: string;
+  stage?: string;
+  logo: string;
+  founderImage?: string;
+  href?: string;
+};
+
+const featuredStartup = getStartupStory("omax-media");
+
+const startups: StartupCard[] = [
+  ...(featuredStartup
+    ? [
+        {
+          name: featuredStartup.startupName,
+          founder: featuredStartup.founderName ?? "Not listed",
+          description: featuredStartup.shortStory,
+          city: featuredStartup.location,
+          industry: featuredStartup.industry,
+          logo: featuredStartup.startupLogo || featuredStartup.coverImage,
+          founderImage: featuredStartup.founderImage,
+          href: `/startups/${featuredStartup.slug}`,
+        },
+      ]
+    : []),
   {
     name: "Startup Two",
     founder: "Founder Name",
@@ -137,20 +158,22 @@ export function FounderWall() {
                     <img
                       src={startup.logo}
                       alt={`${startup.name} logo`}
-                      className="h-full w-full object-cover"
+                      className="h-full w-full object-contain"
                     />
                   ) : (
                     <Rocket className="h-6 w-6" />
                   )}
                 </div>
 
-                <span className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
-                  {startup.stage}
-                </span>
+                {startup.stage && (
+                  <span className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
+                    {startup.stage}
+                  </span>
+                )}
               </div>
 
               <div className="mt-6">
-                <h3 className="text-xl font-bold text-slate-950">{startup.name}</h3>
+                <h3 className="break-words text-xl font-bold text-slate-950">{startup.name}</h3>
                 <p className="mt-3 min-h-[72px] text-sm leading-6 text-slate-600">
                   {startup.description}
                 </p>
@@ -158,8 +181,18 @@ export function FounderWall() {
 
               <div className="mt-5 space-y-3 border-t border-slate-200 pt-5">
                 <div className="flex items-center gap-3 text-sm text-slate-600">
-                  <UserRound className="h-4 w-4 shrink-0 text-blue-600" />
-                  <span>
+                  {startup.founderImage ? (
+                    <img
+                      src={startup.founderImage}
+                      alt={startup.founder}
+                      width={40}
+                      height={40}
+                      className="h-10 w-10 shrink-0 rounded-xl border border-slate-200 object-cover"
+                    />
+                  ) : (
+                    <UserRound className="h-4 w-4 shrink-0 text-blue-600" />
+                  )}
+                  <span className="min-w-0 break-words">
                     Founder:{" "}
                     <strong className="font-semibold text-slate-900">{startup.founder}</strong>
                   </span>
@@ -172,13 +205,13 @@ export function FounderWall() {
 
                 <div className="flex items-center gap-3 text-sm text-slate-600">
                   <Building2 className="h-4 w-4 shrink-0 text-blue-600" />
-                  <span>{startup.industry}</span>
+                  <span className="min-w-0 break-words">{startup.industry}</span>
                 </div>
               </div>
 
               <a
-                href="/startups"
-                className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-slate-950 transition group-hover:text-blue-600"
+                href={startup.href ?? "/startups"}
+                className="mt-auto inline-flex items-center gap-2 pt-6 text-sm font-bold text-slate-950 transition group-hover:text-blue-600"
               >
                 View startup
                 <ArrowRight className="h-4 w-4" />
@@ -205,8 +238,8 @@ export function FounderWall() {
         </div>
 
         <p className="mt-6 text-center text-xs leading-5 text-slate-400">
-          Startup names and founder details shown here are placeholders. Replace them with approved
-          startup information before publishing.
+          The remaining sample profiles will be updated as more founders share their startup
+          details.
         </p>
       </div>
     </section>

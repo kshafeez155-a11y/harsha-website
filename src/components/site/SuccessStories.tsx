@@ -45,25 +45,35 @@ export function SuccessStories() {
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/25 to-transparent md:bg-gradient-to-r md:from-transparent md:via-slate-950/5 md:to-slate-950/35" />
 
                 <div className="absolute bottom-5 left-5 right-5 flex items-end justify-between gap-4 sm:bottom-7 sm:left-7 sm:right-7">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <img
-                      src={story.founderImage}
-                      alt={`${story.founderName}, founder of ${story.startupName}`}
-                      className="h-14 w-14 shrink-0 rounded-2xl border-2 border-white/30 object-cover shadow-xl sm:h-16 sm:w-16"
-                    />
+                  {(story.founderName || story.founderImage) && (
+                    <div className="flex min-w-0 items-center gap-3">
+                      {story.founderImage && (
+                        <img
+                          src={story.founderImage}
+                          alt={
+                            story.founderName
+                              ? `${story.founderName}, founder of ${story.startupName}`
+                              : `Founder of ${story.startupName}`
+                          }
+                          className="h-14 w-14 shrink-0 rounded-2xl border-2 border-white/30 object-cover shadow-xl sm:h-16 sm:w-16"
+                        />
+                      )}
 
-                    <div className="min-w-0">
-                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-300">
-                        Founder
-                      </p>
+                      {story.founderName && (
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-300">
+                            Founder
+                          </p>
 
-                      <h3 className="mt-1 truncate text-base font-black text-white sm:text-lg">
-                        {story.founderName}
-                      </h3>
+                          <h3 className="mt-1 truncate text-base font-black text-white sm:text-lg">
+                            {story.founderName}
+                          </h3>
+                        </div>
+                      )}
                     </div>
-                  </div>
+                  )}
 
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/20 bg-white text-slate-950 shadow-xl sm:h-14 sm:w-14">
+                  <div className="ml-auto flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/20 bg-white text-slate-950 shadow-xl sm:h-14 sm:w-14">
                     {story.startupLogo ? (
                       <img
                         src={story.startupLogo}

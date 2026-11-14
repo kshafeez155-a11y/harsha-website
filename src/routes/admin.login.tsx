@@ -1,19 +1,30 @@
 import { useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 
-import { isAdminUser } from "@/components/admin/admin-auth";
+import { verifyAdminAccess } from "@/components/admin/admin-auth";
+import {
+  ADMIN_ACCESS_MESSAGES,
+  isAdminAccessFailureReason,
+  type AdminAccessFailureReason,
+} from "@/lib/admin-access";
 import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/admin/login")({
+  validateSearch: (search: Record<string, unknown>): { access?: AdminAccessFailureReason } => ({
+    access: isAdminAccessFailureReason(search.access) ? search.access : undefined,
+  }),
   component: AdminLoginPage,
 });
 
 function AdminLoginPage() {
   const navigate = Route.useNavigate();
+  const { access } = Route.useSearch();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(
+    access ? ADMIN_ACCESS_MESSAGES[access] : null,
+  );
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -30,14 +41,14 @@ function AdminLoginPage() {
         return;
       }
 
-      if (!isAdminUser(data.user)) {
+      const adminAccess = await verifyAdminAccess();
+      if (!adminAccess.allowed) {
         await supabase.auth.signOut();
-        setErrorMessage(
-          "Your credentials were accepted, but this account is not configured as a Hanova administrator. Add your email to VITE_ADMIN_EMAILS or set the Supabase admin role claim.",
-        );
+        setErrorMessage(adminAccess.message);
         return;
       }
 
+      setPassword("");
       await navigate({ to: "/admin" });
     } catch (error) {
       console.error("[Admin login] Sign in failed", error);

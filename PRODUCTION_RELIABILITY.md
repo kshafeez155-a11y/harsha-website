@@ -8,7 +8,9 @@ Admin pages show loading, empty, and error states separately. Existing Refresh c
 
 ## Authentication
 
-Admin routes use the Supabase Auth session plus the server-managed `app_metadata.role = admin` authorization contract. Missing or invalid sessions/claims redirect to `/admin/login`. Password fields are cleared after successful changes, and sign-out uses Supabase Auth followed by router navigation.
+Admin routes use the Supabase Auth session plus the server-managed `app_metadata.role = admin` authorization contract. The database `is_admin` check must also succeed before dashboard access; a stale JWT is refreshed once. Missing or invalid sessions/claims redirect to `/admin/login`. Protected routes render on the client because the session is stored in the browser. Password fields are cleared after successful changes, and sign-out uses Supabase Auth followed by router navigation.
+
+Public intake uses a separate sessionless Supabase client. A signed-in admin can submit a public form without sending the admin JWT or changing the admin session. Database policies remain the access boundary; see `SUPABASE_SETUP.md` and migration `004_submission_access_repair.sql` for provisioning.
 
 ## Application Failure Fallbacks
 
@@ -28,7 +30,7 @@ See `BACKUP_AND_RECOVERY.md` for the table inventory, backup recommendations, re
 
 ## Remaining Limitations
 
-- Live Supabase RLS, grants, backup retention, Auth metadata, and production monitoring cannot be verified from this local workspace.
-- Admin query retry is provided through each page's existing Refresh action; there is no automatic retry loop.
+- Live submission access, admin role authorization, and private PDF storage checks are recorded in `BACKEND_TEST_RESULTS.md`. Backup retention and production monitoring were not checked in that repair.
+- Admin query retry is provided through each page's existing Refresh action. The dashboard also refreshes when its tab becomes visible and every 30 seconds while visible; failed totals show as unavailable rather than zero.
 - Public forms do not provide offline submission queues.
 - Production operators must configure alerting, backups, retention, and the approved Auth admin role in Supabase.

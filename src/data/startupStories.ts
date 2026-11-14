@@ -14,11 +14,11 @@ export type StartupProject = {
 export type StartupStory = {
   slug: string;
   startupName: string;
-  founderName: string;
+  founderName?: string;
   location: string;
   industry: string;
   shortStory: string;
-  founderImage: string;
+  founderImage?: string;
   startupLogo: string;
   coverImage: string;
   portfolioHeading?: string;

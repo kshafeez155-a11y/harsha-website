@@ -61,6 +61,7 @@ function StartupStoryPage() {
 
   const hasPortfolio =
     Boolean(startup.mediaPortfolio?.length) || Boolean(startup.technologyPortfolio?.length);
+  const hasFounderProfile = Boolean(startup.founderName || startup.founderImage);
 
   return (
     <>
@@ -92,7 +93,11 @@ function StartupStoryPage() {
               Back to founder stories
             </Link>
 
-            <div className="mt-9 grid gap-10 sm:mt-12 lg:grid-cols-[1fr_340px] lg:items-end">
+            <div
+              className={`mt-9 grid gap-10 sm:mt-12 ${
+                hasFounderProfile ? "lg:grid-cols-[1fr_340px] lg:items-end" : ""
+              }`}
+            >
               <div className="max-w-4xl">
                 <div className="inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-cyan-200">
                   <Rocket className="h-4 w-4 shrink-0" />
@@ -110,10 +115,12 @@ function StartupStoryPage() {
                 )}
 
                 <div className="mt-6 flex flex-col gap-3 text-sm text-slate-300 sm:flex-row sm:flex-wrap sm:gap-5">
-                  <span className="inline-flex items-center gap-2">
-                    <UserRound className="h-4 w-4 shrink-0 text-cyan-300" />
-                    Founder: {startup.founderName}
-                  </span>
+                  {startup.founderName && (
+                    <span className="inline-flex items-center gap-2">
+                      <UserRound className="h-4 w-4 shrink-0 text-cyan-300" />
+                      Founder: {startup.founderName}
+                    </span>
+                  )}
 
                   <span className="inline-flex items-center gap-2">
                     <MapPin className="h-4 w-4 shrink-0 text-cyan-300" />
@@ -131,21 +138,35 @@ function StartupStoryPage() {
                 </p>
               </div>
 
-              <div className="mx-auto w-full max-w-sm rounded-[28px] border border-white/15 bg-white/10 p-5 backdrop-blur lg:mx-0">
-                <img
-                  src={startup.founderImage}
-                  alt={`${startup.founderName}, founder of ${startup.startupName}`}
-                  className="aspect-square w-full rounded-2xl object-cover"
-                />
+              {hasFounderProfile && (
+                <div className="mx-auto w-full max-w-sm rounded-[28px] border border-white/15 bg-white/10 p-5 backdrop-blur lg:mx-0">
+                  {startup.founderImage && (
+                    <img
+                      src={startup.founderImage}
+                      alt={
+                        startup.founderName
+                          ? `${startup.founderName}, founder of ${startup.startupName}`
+                          : `Founder of ${startup.startupName}`
+                      }
+                      className="aspect-square w-full rounded-2xl object-cover"
+                    />
+                  )}
 
-                <p className="mt-5 text-xs font-bold uppercase tracking-[0.16em] text-cyan-300">
-                  Founder
-                </p>
+                  {startup.founderName && (
+                    <>
+                      <p className="mt-5 text-xs font-bold uppercase tracking-[0.16em] text-cyan-300">
+                        Founder
+                      </p>
 
-                <h2 className="mt-2 break-words text-xl font-black">{startup.founderName}</h2>
+                      <h2 className="mt-2 break-words text-xl font-black">{startup.founderName}</h2>
 
-                <p className="mt-1 text-sm text-slate-300">Founder of {startup.startupName}</p>
-              </div>
+                      <p className="mt-1 text-sm text-slate-300">
+                        Founder of {startup.startupName}
+                      </p>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </section>

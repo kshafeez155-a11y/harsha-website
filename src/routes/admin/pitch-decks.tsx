@@ -18,6 +18,7 @@ import { requireAdmin } from "@/components/admin/admin-auth";
 import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/admin/pitch-decks")({
+  ssr: false,
   beforeLoad: requireAdmin,
   component: PitchDeckSubmissionsPage,
 });

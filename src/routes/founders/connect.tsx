@@ -4,7 +4,7 @@ import { CalendarDays, CheckCircle2, Clock3, MessageSquareText, UsersRound } fro
 
 import { Footer } from "@/components/site/Footer";
 import { Navbar } from "@/components/site/Navbar";
-import { supabase } from "@/lib/supabase";
+import { publicSupabase } from "@/lib/supabase";
 import { getUserFacingError } from "@/lib/reliability";
 
 export const Route = createFileRoute("/founders/connect")({
@@ -15,7 +15,6 @@ export const Route = createFileRoute("/founders/connect")({
 });
 
 function FounderMeetingPage() {
-  const { founder } = Route.useSearch();
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -61,7 +60,7 @@ function FounderMeetingPage() {
         payloadKeys: Object.keys(payload),
       });
 
-      const { error } = await supabase.from(tableName).insert([payload]);
+      const { error } = await publicSupabase.from(tableName).insert([payload]);
 
       if (error) {
         throw error;
@@ -146,7 +145,7 @@ function FounderMeetingPage() {
                   Book a focused meeting with Hanova
                 </h1>
                 <p className="mt-5 text-base leading-7 text-slate-300">
-                  Tell the founders what you are building, what is blocking you, and what outcome
+                  Tell the founder what you are building, what is blocking you, and what outcome
                   would make the conversation valuable.
                 </p>
                 <div className="mt-9 space-y-5">
@@ -158,7 +157,7 @@ function FounderMeetingPage() {
                   <Info
                     icon={CalendarDays}
                     title="Right conversation"
-                    text="We connect you with the most relevant founder."
+                    text="Connect with Harsha for guidance on your next step."
                   />
                   <Info
                     icon={Clock3}
@@ -229,12 +228,8 @@ function FounderMeetingPage() {
                   id="meeting-founder"
                   name="founder"
                   label="Who would you like to meet?"
-                  defaultValue={founder}
-                  options={[
-                    ["either", "Whichever founder is most relevant"],
-                    ["harsha", "Harsha — Co-founder & CEO"],
-                    ["yaswanth", "Yaswanth — Co-founder & CTO"],
-                  ]}
+                  defaultValue="harsha"
+                  options={[["harsha", "Harsha — Founder & CEO"]]}
                 />
 
                 <SelectField

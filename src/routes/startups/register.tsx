@@ -4,7 +4,7 @@ import { CheckCircle2, Rocket } from "lucide-react";
 
 import { Navbar } from "@/components/site/Navbar";
 import { Footer } from "@/components/site/Footer";
-import { supabase } from "@/lib/supabase";
+import { publicSupabase } from "@/lib/supabase";
 import { getUserFacingError } from "@/lib/reliability";
 
 export const Route = createFileRoute("/startups/register")({
@@ -61,7 +61,7 @@ function StartupRegistrationPage() {
 
     try {
       uploadedPitchDeckPath = `intake/${crypto.randomUUID()}.pdf`;
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError } = await publicSupabase.storage
         .from("pitch-decks")
         .upload(uploadedPitchDeckPath, pitchDeck, {
           cacheControl: "3600",
@@ -71,7 +71,7 @@ function StartupRegistrationPage() {
 
       if (uploadError) throw uploadError;
 
-      const { error } = await supabase.from("startup_registrations").insert({
+      const { error } = await publicSupabase.from("startup_registrations").insert({
         startup_name: startupName,
         founder_name: founderName,
         problem,
@@ -92,7 +92,7 @@ function StartupRegistrationPage() {
     } catch (error) {
       console.error("[Startup registration] Supabase insert failed", error);
       if (uploadedPitchDeckPath) {
-        const { error: cleanupError } = await supabase.storage
+        const { error: cleanupError } = await publicSupabase.storage
           .from("pitch-decks")
           .remove([uploadedPitchDeckPath]);
         if (cleanupError)

@@ -4,6 +4,7 @@ import { FounderConnectionsAdmin } from "@/components/admin/FounderConnectionsAd
 import { requireAdmin } from "@/components/admin/admin-auth";
 
 export const Route = createFileRoute("/admin/founders")({
+  ssr: false,
   beforeLoad: requireAdmin,
   component: FounderConnectionsAdmin,
 });

@@ -17,6 +17,7 @@ import { requireAdmin } from "@/components/admin/admin-auth";
 import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/admin/partners")({
+  ssr: false,
   beforeLoad: requireAdmin,
   component: PartnerApplicationsPage,
 });

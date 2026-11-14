@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   Activity,
@@ -15,10 +15,12 @@ import {
 } from "lucide-react";
 
 import { AdminShell } from "@/components/admin/AdminShell";
-import { requireAdmin } from "@/components/admin/admin-auth";
+import { requireAdmin, verifyAdminAccess } from "@/components/admin/admin-auth";
+import { dateValue, loadDashboardData, type DashboardSubmission } from "@/lib/admin-dashboard";
 import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/admin/")({
+  ssr: false,
   beforeLoad: requireAdmin,
   component: AdminPage,
 });
@@ -32,59 +34,51 @@ const sources = [
   ["partner_applications", "Partner applications", Handshake, "/admin/partners"],
   ["founder_connection_requests", "Founder connections", Users, "/admin/founder-connections"],
   ["pitch_deck_submissions", "Pitch deck submissions", FileText, "/admin/pitch-decks"],
-  ["contact_submissions", "Contact submissions", MessageSquare, "/admin"],
+  ["contact_submissions", "Contact submissions", MessageSquare, "/admin/messages"],
 ] as const;
 
-type Submission = Record<string, unknown> & { source: string; type: string };
+type Submission = DashboardSubmission;
 
 function AdminPage() {
-  const [counts, setCounts] = useState<Record<string, number>>({});
+  const [counts, setCounts] = useState<Record<string, number | null>>({});
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const loadingRef = useRef(false);
 
   const loadDashboard = useCallback(async () => {
+    if (loadingRef.current) return;
+    loadingRef.current = true;
     setIsRefreshing(true);
     setErrorMessage(null);
     try {
-      const results = await Promise.all(
-        sources.map(async ([table, type]) => {
-          const result = await supabase
-            .from(table)
-            .select("*", { count: "exact" })
-            .order("created_at", { ascending: false })
-            .limit(5);
-          return { table, type, ...result };
-        }),
-      );
-
-      const failed = results.find((result) => result.error);
-      if (failed?.error) {
-        console.error("[Admin dashboard] Could not load submissions", failed.error);
-        setErrorMessage(
-          "Some submissions could not be loaded. Check the table read policies for the authenticated admin role.",
-        );
+      const access = await verifyAdminAccess();
+      if (!access.allowed) {
+        setCounts({});
+        setSubmissions([]);
+        setErrorMessage(access.message);
+        return;
       }
 
-      setCounts(Object.fromEntries(results.map((result) => [result.table, result.count ?? 0])));
-      setSubmissions(
-        results
-          .flatMap(
-            (result) =>
-              (result.data ?? []).map((row) => ({
-                ...row,
-                source: result.table,
-                type: result.type,
-              })) as Submission[],
-          )
-          .sort((a, b) => dateValue(b.created_at) - dateValue(a.created_at))
-          .slice(0, 8),
+      const result = await loadDashboardData(
+        supabase,
+        sources.map(([table, type]) => ({ table, type })),
       );
+      setCounts(result.counts);
+      setSubmissions(result.submissions);
+      if (result.failedSources.length) {
+        setErrorMessage(
+          `Could not load: ${result.failedSources.join(", ")}. Please refresh to retry.`,
+        );
+      }
     } catch (error) {
       console.error("[Admin dashboard] Could not load submissions", error);
+      setCounts({});
+      setSubmissions([]);
       setErrorMessage("Submissions are temporarily unavailable. Please try again later.");
     } finally {
+      loadingRef.current = false;
       setIsLoading(false);
       setIsRefreshing(false);
     }
@@ -92,6 +86,17 @@ function AdminPage() {
 
   useEffect(() => {
     void loadDashboard();
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") void loadDashboard();
+    };
+    window.addEventListener("focus", refreshWhenVisible);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    const interval = window.setInterval(refreshWhenVisible, 30000);
+    return () => {
+      window.removeEventListener("focus", refreshWhenVisible);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+      window.clearInterval(interval);
+    };
   }, [loadDashboard]);
 
   return (
@@ -146,8 +151,10 @@ function AdminPage() {
             <p className="mt-1 text-3xl font-bold tracking-tight">
               {isLoading ? (
                 <LoaderCircle className="animate-spin text-slate-300" size={28} />
+              ) : counts[table] == null ? (
+                <span className="text-base font-medium text-slate-500">Unavailable</span>
               ) : (
-                (counts[table] ?? 0)
+                counts[table]
               )}
             </p>
           </a>
@@ -166,7 +173,9 @@ function AdminPage() {
             <LoaderCircle className="animate-spin" size={18} /> Loading submissions...
           </div>
         ) : submissions.length === 0 ? (
-          <p className="px-5 py-10 text-sm text-slate-500 sm:px-6">No submissions found.</p>
+          <p className="px-5 py-10 text-sm text-slate-500 sm:px-6">
+            {errorMessage ? "Recent submissions could not be loaded." : "No submissions found."}
+          </p>
         ) : (
           <div className="divide-y divide-slate-100">
             {submissions.map((submission, index) => (
@@ -192,10 +201,6 @@ function AdminPage() {
   );
 }
 
-function dateValue(value: unknown) {
-  const time = Date.parse(String(value ?? ""));
-  return Number.isNaN(time) ? 0 : time;
-}
 function formatDate(value: unknown) {
   const time = dateValue(value);
   return time

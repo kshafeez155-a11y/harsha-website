@@ -112,7 +112,7 @@ export function Hero() {
               </span>
             </a>
             <a
-              href="#work"
+              href="/startups/register"
               className="inline-flex items-center gap-2 rounded-full border bg-white px-6 py-3.5 text-sm font-semibold transition hover:-translate-y-0.5 soft-shadow"
             >
               Register Startup

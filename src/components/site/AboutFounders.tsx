@@ -1,4 +1,4 @@
-import { ArrowRight, ArrowUpRight, MessageCircle, Quote, Sparkles } from "lucide-react";
+import { ArrowUpRight, MessageCircle, Quote, Sparkles } from "lucide-react";
 
 const founders = [
   {
@@ -18,18 +18,6 @@ const founders = [
       "🌐 Community Building",
     ],
   },
-  {
-    name: "M.Yashwath Kumar Yadhav",
-    role: "Co-founder & CTO",
-    image: "/images/yaswanth.jpeg",
-    imageClassName: "object-[center_48%] scale-[1.08] group-hover:scale-[1.11]",
-    whatsapp: "919440463292",
-    whatsappMessage:
-      "Hello Yashwath, I found your profile on the Hanova website and would like to connect with you.",
-    description:
-      "Yashwanth is building Hanova's technology foundation into a powerful platform for startup innovation and growth. He works closely with founders to transform validated ideas into scalable digital products, helping startups build MVPs, websites, software platforms, AI-powered solutions, and launch-ready technology.",
-    expertise: ["💻 Product Engineering", "🤖 AI & Digital Innovation", "🚀 Scalable Technology"],
-  },
 ];
 
 export function AboutFounders() {
@@ -47,11 +35,11 @@ export function AboutFounders() {
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-bold uppercase tracking-[0.15em] text-blue-700">
               <Sparkles className="h-4 w-4 shrink-0" />
-              The people behind Hanova
+              The founder behind Hanova
             </div>
 
             <h2 className="mt-5 max-w-4xl text-3xl font-bold leading-tight tracking-tight text-slate-950 sm:mt-6 sm:text-4xl lg:text-5xl">
-              Built by people who believe founders deserve{" "}
+              Built on the belief that founders deserve{" "}
               <span className="bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">
                 practical support.
               </span>
@@ -72,28 +60,17 @@ export function AboutFounders() {
               step.
             </p>
 
-            <p className="mt-4 text-sm font-semibold text-slate-500">The Hanova founding team</p>
+            <p className="mt-4 text-sm font-semibold text-slate-500">
+              K.Harsha Vardhan, Founder &amp; CEO
+            </p>
           </div>
         </div>
 
-        <div className="mb-4 mt-10 flex items-center justify-between gap-4 sm:hidden">
-          <div>
-            <p className="text-sm font-bold text-slate-700">Meet the founders</p>
-
-            <p className="mt-1 text-xs text-slate-500">Swipe left to view the next founder</p>
-          </div>
-
-          <div className="inline-flex shrink-0 items-center gap-1 rounded-full bg-blue-50 px-3 py-2 text-xs font-bold uppercase tracking-wider text-blue-600">
-            Swipe
-            <ArrowRight className="h-3.5 w-3.5" />
-          </div>
-        </div>
-
-        <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-5 pr-20 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:mt-12 sm:grid sm:grid-cols-2 sm:gap-6 sm:overflow-visible sm:px-0 sm:pb-0 sm:pr-0 lg:mt-14">
-          {founders.map((founder, index) => (
+        <div className="mx-auto mt-10 max-w-2xl sm:mt-12 lg:mt-14">
+          {founders.map((founder) => (
             <article
               key={founder.name}
-              className="group w-[76vw] min-w-[76vw] max-w-[310px] flex-none snap-start overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-[0_24px_60px_-38px_rgba(15,23,42,0.45)] transition duration-300 hover:-translate-y-1 hover:border-blue-300 sm:w-auto sm:min-w-0 sm:max-w-none sm:rounded-[30px]"
+              className="group overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-[0_24px_60px_-38px_rgba(15,23,42,0.45)] transition duration-300 hover:-translate-y-1 hover:border-blue-300 sm:rounded-[30px]"
             >
               <div className="relative h-[285px] overflow-hidden bg-slate-200 sm:h-[430px]">
                 <img
@@ -106,7 +83,7 @@ export function AboutFounders() {
 
                 <div className="absolute inset-x-0 bottom-0 p-5 text-white sm:p-8">
                   <p className="text-xs font-bold uppercase tracking-[0.17em] text-blue-200">
-                    Founder 0{index + 1}
+                    Founder
                   </p>
 
                   <h3 className="mt-2 break-words text-2xl font-bold leading-tight text-white sm:text-4xl">

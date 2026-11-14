@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 
-import { supabase } from "@/lib/supabase";
+import { publicSupabase } from "@/lib/supabase";
 import { getUserFacingError } from "@/lib/reliability";
 
 const contactDetails = [
@@ -35,12 +35,15 @@ export function Contact() {
     const contactName = formData.get("contact-name");
     const contactPhone = formData.get("contact-phone");
     const contactEmail = formData.get("contact-email");
+    const contactLocation = formData.get("contact-location");
     const message = formData.get("message");
 
     if (
       typeof contactName !== "string" ||
       typeof contactPhone !== "string" ||
       typeof contactEmail !== "string" ||
+      typeof contactLocation !== "string" ||
+      !contactLocation.trim() ||
       typeof message !== "string"
     ) {
       setFeedback("Please complete all required fields before sending your message.");
@@ -51,11 +54,12 @@ export function Contact() {
     setFeedback(null);
 
     try {
-      const { error } = await supabase.from("contact_submissions").insert({
+      const { error } = await publicSupabase.from("contact_submissions").insert({
         contact_name: contactName,
         contact_phone: contactPhone,
         contact_email: contactEmail,
-        message,
+        // Include location in the message so it works with the existing database and admin inbox.
+        message: `Location: ${contactLocation.trim()}\n\n${message}`,
       });
 
       if (error) throw error;
@@ -143,12 +147,21 @@ export function Contact() {
                   />
                 </div>
 
-                <FormField
-                  id="contact-email"
-                  label="Email"
-                  type="email"
-                  placeholder="Enter your email address"
-                />
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <FormField
+                    id="contact-email"
+                    label="Email"
+                    type="email"
+                    placeholder="Enter your email address"
+                  />
+
+                  <FormField
+                    id="contact-location"
+                    label="Location"
+                    type="text"
+                    placeholder="Enter your city or town"
+                  />
+                </div>
 
                 <div>
                   <label htmlFor="contact-message" className="text-sm font-semibold text-slate-900">

@@ -4,7 +4,7 @@ import { CheckCircle2, UsersRound } from "lucide-react";
 
 import { Navbar } from "@/components/site/Navbar";
 import { Footer } from "@/components/site/Footer";
-import { supabase } from "@/lib/supabase";
+import { publicSupabase } from "@/lib/supabase";
 import { getUserFacingError } from "@/lib/reliability";
 
 export const Route = createFileRoute("/community/join")({
@@ -52,7 +52,7 @@ function CommunityJoinPage() {
     setSubmitError(null);
 
     try {
-      const { error } = await supabase.from("community_join_applications").insert({
+      const { error } = await publicSupabase.from("community_join_applications").insert({
         name,
         phone,
         email,

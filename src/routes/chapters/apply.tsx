@@ -4,7 +4,7 @@ import { CheckCircle2, MapPinned, Rocket, UsersRound } from "lucide-react";
 
 import { Footer } from "@/components/site/Footer";
 import { Navbar } from "@/components/site/Navbar";
-import { supabase } from "@/lib/supabase";
+import { publicSupabase } from "@/lib/supabase";
 import { getUserFacingError } from "@/lib/reliability";
 
 export const Route = createFileRoute("/chapters/apply")({
@@ -61,7 +61,7 @@ function ChapterApplicationPage() {
     setSubmitError(null);
 
     try {
-      const { error } = await supabase.from("chapter_applications").insert({
+      const { error } = await publicSupabase.from("chapter_applications").insert({
         name,
         phone,
         email,
