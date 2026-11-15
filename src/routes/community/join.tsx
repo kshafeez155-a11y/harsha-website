@@ -4,14 +4,23 @@ import { CheckCircle2, UsersRound } from "lucide-react";
 
 import { Navbar } from "@/components/site/Navbar";
 import { Footer } from "@/components/site/Footer";
+import { HubSelect } from "@/components/site/HubSelect";
+import { useHubs } from "@/hooks/use-hubs";
 import { publicSupabase } from "@/lib/supabase";
 import { getUserFacingError } from "@/lib/reliability";
 
 export const Route = createFileRoute("/community/join")({
+  validateSearch: (search: Record<string, unknown>): { hub?: string } => ({
+    hub: typeof search.hub === "string" ? search.hub : undefined,
+  }),
   component: CommunityJoinPage,
 });
 
 function CommunityJoinPage() {
+  const { hub } = Route.useSearch();
+  const hubsQuery = useHubs();
+  const hubs = hubsQuery.data ?? [];
+  const [selectedHub, setSelectedHub] = useState(hub ?? "");
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -19,6 +28,10 @@ function CommunityJoinPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (isSubmitting) return;
+    if (hubsQuery.isPending || hubsQuery.isError || !hubs.some((item) => item.id === selectedHub)) {
+      setSubmitError("Please select an available hub before submitting.");
+      return;
+    }
 
     const form = event.currentTarget;
     const formData = new FormData(form);
@@ -53,6 +66,7 @@ function CommunityJoinPage() {
 
     try {
       const { error } = await publicSupabase.from("community_join_applications").insert({
+        hub_id: selectedHub,
         name,
         phone,
         email,
@@ -157,6 +171,16 @@ function CommunityJoinPage() {
               </div>
 
               <form onSubmit={handleSubmit} className="mt-8 grid gap-5">
+                <HubSelect
+                  hubs={hubs}
+                  value={selectedHub}
+                  onChange={setSelectedHub}
+                  loading={hubsQuery.isPending}
+                  unavailable={hubsQuery.isError}
+                  onRetry={() => {
+                    void hubsQuery.refetch();
+                  }}
+                />
                 <div className="grid gap-5 sm:grid-cols-2">
                   <InputField
                     id="community-name"
@@ -249,7 +273,12 @@ function CommunityJoinPage() {
                 </label>
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={
+                    isSubmitting ||
+                    hubsQuery.isPending ||
+                    hubsQuery.isError ||
+                    !hubs.some((item) => item.id === selectedHub)
+                  }
                   className="min-h-12 rounded-full bg-blue-600 px-7 py-3 text-sm font-bold text-white transition hover:bg-blue-500 sm:w-fit"
                 >
                   {isSubmitting ? "Submitting..." : "Join the community"}

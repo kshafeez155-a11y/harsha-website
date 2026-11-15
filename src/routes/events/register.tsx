@@ -4,7 +4,8 @@ import { CalendarCheck2, CheckCircle2, Clock3, MapPin } from "lucide-react";
 
 import { Footer } from "@/components/site/Footer";
 import { Navbar } from "@/components/site/Navbar";
-import { hubEvents, hubs } from "@/data/siteData";
+import { HubDataNotice } from "@/components/site/HubSelect";
+import { formatEventDate, useHubEvents, useHubs } from "@/hooks/use-hubs";
 import { publicSupabase } from "@/lib/supabase";
 import { getUserFacingError } from "@/lib/reliability";
 
@@ -17,16 +18,57 @@ export const Route = createFileRoute("/events/register")({
 
 function EventRegistrationPage() {
   const { event: eventId } = Route.useSearch();
-  const selectedEvent = hubEvents.find((item) => item.id === eventId) ?? hubEvents[0];
-  const eventHub = hubs.find((item) => item.slug === selectedEvent?.hubSlug);
+  const hubsQuery = useHubs();
+  const eventsQuery = useHubEvents();
+  const selectedEvent = eventsQuery.data?.find((item) => item.id === eventId && item.is_published);
+  const eventHub = hubsQuery.data?.find((item) => item.id === selectedEvent?.hub_id);
+  const loading = hubsQuery.isPending || eventsQuery.isPending;
+  const unavailable = hubsQuery.isError || eventsQuery.isError;
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  if (!submitted && (loading || unavailable || !selectedEvent || !eventHub)) {
+    return (
+      <div className="min-h-screen bg-[#fbfbfd] text-slate-950">
+        <Navbar />
+        <main className="mx-auto max-w-3xl px-4 pb-24 pt-36 text-center">
+          <HubDataNotice
+            loading={loading}
+            unavailable={unavailable}
+            onRetry={() => {
+              void hubsQuery.refetch();
+              void eventsQuery.refetch();
+            }}
+          />
+          {!loading && !unavailable && (
+            <>
+              <h1 className="text-4xl font-black">Event registration unavailable</h1>
+              <p className="mt-4 leading-7 text-slate-600">
+                Choose an available event to register with its local hub.
+              </p>
+            </>
+          )}
+          <a
+            href="/events/"
+            className="mt-7 inline-flex min-h-12 items-center justify-center rounded-full bg-slate-950 px-7 text-sm font-black text-white"
+          >
+            View events
+          </a>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (isSubmitting) return;
+    if (loading || unavailable || !selectedEvent || !eventHub) {
+      setSubmitError("This event is unavailable. Please choose another event.");
+      return;
+    }
 
     const form = event.currentTarget;
     const formData = new FormData(form);
@@ -54,6 +96,8 @@ function EventRegistrationPage() {
 
     try {
       const { error } = await publicSupabase.from("event_registrations").insert({
+        hub_id: selectedEvent.hub_id,
+        event_id: selectedEvent.id,
         name,
         phone,
         email,
@@ -100,7 +144,7 @@ function EventRegistrationPage() {
                   <div className="mt-7 space-y-4 text-sm font-semibold text-slate-300">
                     <p className="flex gap-3">
                       <CalendarCheck2 className="h-5 w-5 text-blue-300" />{" "}
-                      {selectedEvent.displayDate}
+                      {formatEventDate(selectedEvent.date)}
                     </p>
                     <p className="flex gap-3">
                       <Clock3 className="h-5 w-5 text-blue-300" /> {selectedEvent.time}

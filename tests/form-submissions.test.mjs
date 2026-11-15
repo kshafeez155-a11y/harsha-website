@@ -17,12 +17,32 @@ const base = {
   city: "Kadapa",
 };
 const deckPath = "intake/11111111-1111-4111-8111-111111111111.pdf";
+const upcomingMeeting = chapterData.chapterMeetings.find((item) => item.status === "upcoming");
+const hubRows = siteData.hubs.map((hub) => ({
+  id: hub.slug,
+  city: hub.city,
+  district: hub.district,
+  status: hub.status,
+  summary: hub.summary,
+  description: hub.description,
+  focus_areas: hub.focusAreas,
+  facilities: hub.facilities,
+  contact_name: "",
+  contact_email: "",
+  contact_phone: "",
+}));
+const eventRows = siteData.hubEvents.map((event) => ({
+  ...event,
+  hub_id: event.hubSlug,
+  is_published: true,
+}));
 
 const cases = [
   {
     name: "community application",
     source: "src/routes/community/join.tsx",
     table: "community_join_applications",
+    search: { hub: "kadapa" },
     values: {
       ...base,
       district: "YSR Kadapa",
@@ -33,6 +53,7 @@ const cases = [
     },
     expected: {
       ...base,
+      hub_id: "kadapa",
       district: "YSR Kadapa",
       college_or_company: "Example Works",
       profession: "Founder",
@@ -81,17 +102,25 @@ const cases = [
     table: "event_registrations",
     search: { event: siteData.hubEvents[0].id },
     values: { ...base, purpose: "Meet local startup mentors" },
-    expected: { ...base, purpose: "Meet local startup mentors", consent_given: true },
+    expected: {
+      ...base,
+      purpose: "Meet local startup mentors",
+      consent_given: true,
+      hub_id: siteData.hubEvents[0].hubSlug,
+      event_id: siteData.hubEvents[0].id,
+    },
     confirmation: "Registration received",
   },
   {
     name: "meeting registration",
     source: "src/routes/meetings/register.tsx",
     table: "meeting_registrations",
-    search: { meeting: chapterData.chapterMeetings.find((item) => item.status === "upcoming").id },
+    search: { meeting: upcomingMeeting.id },
     values: { ...base, role: "Founder", purpose: "Validate a product idea" },
     expected: {
       ...base,
+      hub_id: upcomingMeeting.chapterSlug,
+      meeting_id: upcomingMeeting.id,
       role: "Founder",
       purpose: "Validate a product idea",
       consent_given: true,
@@ -186,6 +215,7 @@ const cases = [
     name: "startup registration",
     source: "src/routes/startups/register.tsx",
     table: "startup_registrations",
+    search: { hub: "kadapa" },
     values: {
       startup_name: "Test Startup",
       founder_name: base.name,
@@ -199,6 +229,7 @@ const cases = [
       pitch_deck: new File(["%PDF-1.4\n%%EOF"], "pitch.pdf", { type: "application/pdf" }),
     },
     expected: {
+      hub_id: "kadapa",
       startup_name: "Test Startup",
       founder_name: base.name,
       problem: "Local teams struggle to find relevant mentors",
@@ -235,7 +266,10 @@ function text(tree) {
   return tree && typeof tree === "object" ? text(tree.props?.children) : "";
 }
 
-function loadForm(fixture, { uploadError = null } = {}) {
+function loadForm(
+  fixture,
+  { uploadError = null, hubQueryOverrides = {}, eventQueryOverrides = {} } = {},
+) {
   const inserted = deferred();
   const requests = { inserts: [], uploads: [], removals: [], authenticatedClientAccesses: 0 };
   const states = [];
@@ -284,6 +318,20 @@ function loadForm(fixture, { uploadError = null } = {}) {
     },
   );
   const jsx = (type, props) => ({ type, props: props ?? {} });
+  const hubQuery = {
+    data: hubRows,
+    isPending: false,
+    isError: false,
+    refetch() {},
+    ...hubQueryOverrides,
+  };
+  const eventQuery = {
+    data: eventRows,
+    isPending: false,
+    isError: false,
+    refetch() {},
+    ...eventQueryOverrides,
+  };
   const modules = {
     react: {
       useState(initialValue) {
@@ -309,6 +357,12 @@ function loadForm(fixture, { uploadError = null } = {}) {
     "lucide-react": new Proxy({}, { get: () => "icon" }),
     "@/components/site/Navbar": { Navbar: "navbar" },
     "@/components/site/Footer": { Footer: "footer" },
+    "@/components/site/HubSelect": { HubSelect: "hub-select", HubDataNotice: "hub-notice" },
+    "@/hooks/use-hubs": {
+      useHubs: () => hubQuery,
+      useHubEvents: () => eventQuery,
+      formatEventDate: (date) => date,
+    },
     "@/lib/supabase": { publicSupabase, supabase: authenticatedSupabase },
     "@/lib/reliability": { getUserFacingError: (_error, fallback) => fallback },
     "@/data/siteData": siteData,
@@ -437,4 +491,89 @@ test("startup upload failure prevents application insertion and keeps the form f
   assert.equal(text(harness.render()).includes(fixture.confirmation), false);
   assert.match(text(harness.render()), /could not/i);
   assert.equal(harness.requests.authenticatedClientAccesses, 0);
+});
+
+for (const table of [
+  "community_join_applications",
+  "startup_registrations",
+  "meeting_registrations",
+]) {
+  const fixture = cases.find((item) => item.table === table);
+
+  test(`${fixture.name}: the selected hub receives the request regardless of the attendee's city`, async () => {
+    const harness = loadForm(fixture);
+    const selector = nodes(harness.render()).find((node) => node.type === "hub-select");
+    assert.ok(selector, "The visitor must be able to explicitly choose a hub");
+    selector.props.onChange("anantapur");
+    const submission = harness.submit();
+    await waitForInsert(harness);
+    assert.equal(harness.requests.inserts[0].payload.hub_id, "anantapur");
+    harness.inserted.resolve({ error: null });
+    await submission;
+  });
+
+  test(`${fixture.name}: missing or invalid hub selection prevents submission and PDF uploads`, async () => {
+    const harness = loadForm(fixture);
+    const selector = nodes(harness.render()).find((node) => node.type === "hub-select");
+    for (const hub of ["", "unknown-hub"]) {
+      selector.props.onChange(hub);
+      await harness.submit();
+      assert.equal(harness.requests.inserts.length, 0);
+      assert.equal(harness.requests.uploads.length, 0);
+      assert.equal(harness.resetCount, 0);
+      assert.match(text(harness.render()), /select an available hub/i);
+    }
+  });
+
+  test(`${fixture.name}: a hub load failure or pending refresh cannot use stale hub data`, async () => {
+    for (const hubQueryOverrides of [{ isError: true }, { isPending: true }, { data: [] }]) {
+      const harness = loadForm(fixture, { hubQueryOverrides });
+      await harness.submit();
+      assert.equal(harness.requests.inserts.length, 0);
+      assert.equal(harness.requests.uploads.length, 0);
+      assert.equal(harness.resetCount, 0);
+      assert.equal(text(harness.render()).includes(fixture.confirmation), false);
+    }
+  });
+}
+
+test("event registration uses the selected database event and its owning hub", async () => {
+  const fixture = cases.find((item) => item.table === "event_registrations");
+  const liveEvent = {
+    ...eventRows[0],
+    id: "live-anantapur-workshop",
+    hub_id: "anantapur",
+    title: "A new local workshop",
+  };
+  const harness = loadForm(
+    { ...fixture, search: { event: liveEvent.id } },
+    { eventQueryOverrides: { data: [liveEvent] } },
+  );
+  const submission = harness.submit();
+  await waitForInsert(harness);
+  assert.equal(harness.requests.inserts[0].payload.event_id, liveEvent.id);
+  assert.equal(harness.requests.inserts[0].payload.hub_id, "anantapur");
+  assert.equal(harness.requests.inserts[0].payload.city, "Kadapa");
+  harness.inserted.resolve({ error: null });
+  await submission;
+});
+
+test("missing, unknown, unpublished and unavailable events never fall back to another event", () => {
+  const fixture = cases.find((item) => item.table === "event_registrations");
+  const combinations = [
+    { search: {} },
+    { search: { event: "unknown-event" } },
+    { eventQueryOverrides: { data: [{ ...eventRows[0], is_published: false }] } },
+    { eventQueryOverrides: { isError: true } },
+    { eventQueryOverrides: { isPending: true } },
+    { hubQueryOverrides: { isError: true } },
+    { hubQueryOverrides: { data: [] } },
+  ];
+  for (const { search, ...options } of combinations) {
+    const harness = loadForm({ ...fixture, search: search ?? fixture.search }, options);
+    assert.equal(nodes(harness.render()).filter((node) => node.type === "form").length, 0);
+    assert.equal(harness.requests.inserts.length, 0);
+    assert.equal(harness.requests.uploads.length, 0);
+    assert.equal(text(harness.render()).includes(fixture.confirmation), false);
+  }
 });

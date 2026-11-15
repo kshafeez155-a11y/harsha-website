@@ -8,6 +8,7 @@ import {
   Globe2,
   Instagram,
   Layers3,
+  LoaderCircle,
   MapPin,
   Rocket,
   Sparkles,
@@ -16,7 +17,7 @@ import {
 
 import { Footer } from "@/components/site/Footer";
 import { Navbar } from "@/components/site/Navbar";
-import { getStartupStory } from "@/data/startupStories";
+import { useStartupProfiles } from "@/hooks/use-startup-profiles";
 
 export const Route = createFileRoute("/startups/$startupSlug")({
   component: StartupStoryPage,
@@ -24,33 +25,59 @@ export const Route = createFileRoute("/startups/$startupSlug")({
 
 function StartupStoryPage() {
   const { startupSlug } = Route.useParams();
-  const startup = getStartupStory(startupSlug);
+  const { data: startups = [], isPending, isError, refetch } = useStartupProfiles();
+  const startup = startups.find((profile) => profile.slug === startupSlug);
 
-  if (!startup) {
+  if (isPending || isError || !startup) {
     return (
       <>
         <Navbar />
 
         <main className="flex min-h-[70vh] items-center justify-center bg-slate-50 px-4 py-24">
-          <div className="max-w-xl text-center">
+          <div className="max-w-xl text-center" role={isError ? "alert" : "status"}>
             <p className="text-sm font-bold uppercase tracking-[0.18em] text-blue-600">
               Founder story
             </p>
 
-            <h1 className="mt-4 text-4xl font-black text-slate-950">Startup not found</h1>
+            {isPending && (
+              <LoaderCircle className="mx-auto mt-4 h-8 w-8 animate-spin text-blue-600" />
+            )}
+
+            <h1 className="mt-4 text-4xl font-black text-slate-950">
+              {isPending
+                ? "Loading startup..."
+                : isError
+                  ? "Startup could not be loaded"
+                  : "Startup not found"}
+            </h1>
 
             <p className="mt-4 leading-7 text-slate-600">
-              The requested startup profile is unavailable.
+              {isPending
+                ? "Getting the latest founder profile."
+                : isError
+                  ? "Please try again in a moment."
+                  : "The requested startup profile is unavailable."}
             </p>
 
-            <Link
-              to="/"
-              hash="success-stories"
-              className="mt-8 inline-flex min-h-12 items-center gap-2 rounded-full bg-blue-600 px-7 text-sm font-bold text-white transition hover:bg-blue-500"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Return to founder stories
-            </Link>
+            {isError ? (
+              <button
+                type="button"
+                onClick={() => void refetch()}
+                className="mt-8 min-h-12 rounded-full bg-blue-600 px-7 text-sm font-bold text-white hover:bg-blue-500"
+              >
+                Try again
+              </button>
+            ) : (
+              !isPending && (
+                <Link
+                  to="/startups"
+                  className="mt-8 inline-flex min-h-12 items-center gap-2 rounded-full bg-blue-600 px-7 text-sm font-bold text-white transition hover:bg-blue-500"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Explore startups
+                </Link>
+              )
+            )}
           </div>
         </main>
 
@@ -71,11 +98,13 @@ function StartupStoryPage() {
         {/* Hero */}
         <section className="relative overflow-hidden bg-slate-950 pb-16 pt-28 text-white sm:pb-20 sm:pt-32 lg:pb-28">
           <div className="absolute inset-0">
-            <img
-              src={startup.coverImage}
-              alt=""
-              className="h-full w-full object-contain bg-white p-10"
-            />
+            {startup.coverImage && (
+              <img
+                src={startup.coverImage}
+                alt=""
+                className="h-full w-full object-contain bg-white p-10"
+              />
+            )}
 
             <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/95 to-slate-950/65" />
           </div>
@@ -85,12 +114,11 @@ function StartupStoryPage() {
 
           <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <Link
-              to="/"
-              hash="success-stories"
+              to="/startups"
               className="inline-flex items-center gap-2 text-sm font-bold text-slate-300 transition hover:text-white"
             >
               <ArrowLeft className="h-4 w-4" />
-              Back to founder stories
+              Back to startups
             </Link>
 
             <div
@@ -101,7 +129,7 @@ function StartupStoryPage() {
               <div className="max-w-4xl">
                 <div className="inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-cyan-200">
                   <Rocket className="h-4 w-4 shrink-0" />
-                  Startup journey
+                  {startup.stage}
                 </div>
 
                 <h1 className="mt-6 break-words text-4xl font-black tracking-tight sm:text-5xl lg:text-6xl">
@@ -136,6 +164,18 @@ function StartupStoryPage() {
                 <p className="mt-6 max-w-3xl text-base leading-7 text-slate-300 sm:text-lg sm:leading-8">
                   {startup.shortStory}
                 </p>
+
+                {startup.website && (
+                  <a
+                    href={startup.website}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-7 inline-flex min-h-12 items-center gap-2 rounded-full bg-white px-6 text-sm font-bold text-slate-950 transition hover:bg-cyan-300"
+                  >
+                    Visit website
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                )}
               </div>
 
               {hasFounderProfile && (
@@ -172,41 +212,43 @@ function StartupStoryPage() {
         </section>
 
         {/* Startup journey */}
-        <section className="py-14 sm:py-16 lg:py-24">
-          <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-600">
-              Founder progress
-            </p>
+        {startup.milestones.length > 0 && (
+          <section className="py-14 sm:py-16 lg:py-24">
+            <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-600">
+                Founder progress
+              </p>
 
-            <h2 className="mt-4 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
-              The startup journey
-            </h2>
+              <h2 className="mt-4 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
+                The startup journey
+              </h2>
 
-            <div className="mt-10 space-y-5 sm:mt-12">
-              {startup.milestones.map((milestone) => (
-                <article
-                  key={milestone.number}
-                  className="grid gap-5 rounded-[26px] border border-slate-200 bg-slate-50 p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-blue-200 hover:shadow-lg sm:grid-cols-[88px_1fr] sm:rounded-3xl sm:p-8"
-                >
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600 text-lg font-black text-white sm:h-16 sm:w-16 sm:text-xl">
-                    {milestone.number}
-                  </div>
-
-                  <div>
-                    <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-blue-600">
-                      <CheckCircle2 className="h-4 w-4 shrink-0" />
-                      Milestone {milestone.number}
+              <div className="mt-10 space-y-5 sm:mt-12">
+                {startup.milestones.map((milestone) => (
+                  <article
+                    key={milestone.number}
+                    className="grid gap-5 rounded-[26px] border border-slate-200 bg-slate-50 p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-blue-200 hover:shadow-lg sm:grid-cols-[88px_1fr] sm:rounded-3xl sm:p-8"
+                  >
+                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600 text-lg font-black text-white sm:h-16 sm:w-16 sm:text-xl">
+                      {milestone.number}
                     </div>
 
-                    <h3 className="mt-3 text-2xl font-black text-slate-950">{milestone.title}</h3>
+                    <div>
+                      <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-blue-600">
+                        <CheckCircle2 className="h-4 w-4 shrink-0" />
+                        Milestone {milestone.number}
+                      </div>
 
-                    <p className="mt-3 leading-7 text-slate-600">{milestone.description}</p>
-                  </div>
-                </article>
-              ))}
+                      <h3 className="mt-3 text-2xl font-black text-slate-950">{milestone.title}</h3>
+
+                      <p className="mt-3 leading-7 text-slate-600">{milestone.description}</p>
+                    </div>
+                  </article>
+                ))}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* Portfolio introduction */}
         {hasPortfolio && (
@@ -222,7 +264,7 @@ function StartupStoryPage() {
                 </div>
 
                 <h2 className="mt-6 text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
-                  {startup.portfolioHeading}
+                  {startup.portfolioHeading || "Selected projects"}
                 </h2>
 
                 <p className="mt-5 max-w-3xl text-base leading-8 text-slate-300 sm:text-lg">
@@ -283,7 +325,9 @@ function StartupStoryPage() {
               <div className="max-w-3xl">
                 <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-pink-600">
                   <Instagram className="h-4 w-4" />
-                  O-MAX Media portfolio
+                  {startup.mediaDivisionName
+                    ? `${startup.mediaDivisionName} portfolio`
+                    : "Media portfolio"}
                 </div>
 
                 <h2 className="mt-4 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">

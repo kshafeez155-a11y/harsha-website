@@ -129,6 +129,34 @@ function AdminPage() {
           {errorMessage}
         </div>
       )}
+      <a
+        href="/admin/hubs"
+        className="mb-5 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-lime-200 bg-lime-50 p-5"
+      >
+        <span>
+          <span className="block text-lg font-bold text-slate-950">Manage regional hubs</span>
+          <span className="mt-1 block text-sm text-slate-600">
+            Assign local managers, review hub activity and route unassigned requests.
+          </span>
+        </span>
+        <span className="inline-flex items-center gap-2 text-sm font-bold text-[#596a00]">
+          Hub Management <ArrowUpRight size={17} />
+        </span>
+      </a>
+      <a
+        href="/admin/portfolio"
+        className="mb-7 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-blue-200 bg-blue-50 p-5"
+      >
+        <span>
+          <span className="block text-lg font-bold text-slate-950">Manage website startups</span>
+          <span className="mt-1 block text-sm text-slate-600">
+            Add startups, change photos and details, and publish them on your founder wall.
+          </span>
+        </span>
+        <span className="inline-flex items-center gap-2 text-sm font-bold text-blue-700">
+          Manage Startups <ArrowUpRight size={17} />
+        </span>
+      </a>
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-label="Submission totals">
         {sources.map(([table, title, Icon, to], index) => (
           <a

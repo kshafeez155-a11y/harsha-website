@@ -10,13 +10,34 @@ import {
 
 import { Footer } from "@/components/site/Footer";
 import { Navbar } from "@/components/site/Navbar";
-import { getEventsForHub, getHub } from "@/data/siteData";
+import { HubDataNotice } from "@/components/site/HubSelect";
+import { useHubEvents, useHubs } from "@/hooks/use-hubs";
 
 export const Route = createFileRoute("/hubs/$hubId")({ component: HubDetailPage });
 
 function HubDetailPage() {
   const { hubId } = Route.useParams();
-  const hub = getHub(hubId);
+  const hubsQuery = useHubs();
+  const eventsQuery = useHubEvents(hubId);
+  const hub = hubsQuery.data?.find((item) => item.id === hubId);
+
+  if (hubsQuery.isPending || hubsQuery.isError) {
+    return (
+      <div className="min-h-screen bg-[#fbfbfd]">
+        <Navbar />
+        <main className="mx-auto max-w-7xl px-4 pb-24 pt-36">
+          <HubDataNotice
+            loading={hubsQuery.isPending}
+            unavailable={hubsQuery.isError}
+            onRetry={() => {
+              void hubsQuery.refetch();
+            }}
+          />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   if (!hub) {
     return (
@@ -37,7 +58,7 @@ function HubDetailPage() {
     );
   }
 
-  const events = getEventsForHub(hub.slug);
+  const events = eventsQuery.data ?? [];
 
   return (
     <div className="min-h-screen bg-[#fbfbfd] text-slate-950">
@@ -78,13 +99,13 @@ function HubDetailPage() {
                   </p>
                   <div className="mt-9 flex flex-col gap-3 sm:flex-row">
                     <a
-                      href={"/events/?hub=" + hub.slug}
+                      href={"/events/?hub=" + encodeURIComponent(hub.id)}
                       className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-white px-7 text-sm font-black text-slate-950"
                     >
                       <CalendarDays className="h-4 w-4" /> View hub events
                     </a>
                     <a
-                      href="/community/join"
+                      href={"/community/join?hub=" + encodeURIComponent(hub.id)}
                       className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-white/20 bg-white/10 px-7 text-sm font-black text-white"
                     >
                       Join this community <ArrowRight className="h-4 w-4" />
@@ -97,11 +118,20 @@ function HubDetailPage() {
                 <p className="mt-6 text-xs font-black uppercase tracking-[0.16em] text-cyan-200">
                   At this hub
                 </p>
-                <p className="mt-3 text-2xl font-black">
-                  {events.length > 0
-                    ? events.length + " upcoming event" + (events.length === 1 ? "" : "s")
-                    : "Community interest is open"}
-                </p>
+                <HubDataNotice
+                  loading={eventsQuery.isPending}
+                  unavailable={eventsQuery.isError}
+                  onRetry={() => {
+                    void eventsQuery.refetch();
+                  }}
+                />
+                {!eventsQuery.isPending && !eventsQuery.isError && (
+                  <p className="mt-3 text-2xl font-black">
+                    {events.length > 0
+                      ? events.length + " published event" + (events.length === 1 ? "" : "s")
+                      : "Community interest is open"}
+                  </p>
+                )}
                 <p className="mt-4 leading-7 text-slate-300">
                   Hub programming grows around the needs of local founders and the strength of
                   regional partners.
@@ -113,7 +143,7 @@ function HubDetailPage() {
             <HubList
               title="What founders can explore"
               label="Focus areas"
-              items={hub.focusAreas}
+              items={hub.focus_areas}
               color="blue"
             />
             <HubList
@@ -123,6 +153,33 @@ function HubDetailPage() {
               color="violet"
             />
           </div>
+          {(hub.contact_name || hub.contact_email || hub.contact_phone) && (
+            <section className="mt-6 rounded-[28px] border border-slate-200 bg-white p-7 sm:p-9">
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-600">
+                Your local team
+              </p>
+              <h2 className="mt-3 text-2xl font-black">Contact Hanova {hub.city}</h2>
+              <div className="mt-5 flex flex-col gap-3 text-slate-700">
+                {hub.contact_name && <p className="font-bold">{hub.contact_name}</p>}
+                {hub.contact_email && (
+                  <a
+                    className="break-all font-semibold text-blue-700 underline"
+                    href={"mailto:" + hub.contact_email}
+                  >
+                    {hub.contact_email}
+                  </a>
+                )}
+                {hub.contact_phone && (
+                  <a
+                    className="font-semibold text-blue-700 underline"
+                    href={"tel:" + hub.contact_phone.replace(/[^\d+]/g, "")}
+                  >
+                    {hub.contact_phone}
+                  </a>
+                )}
+              </div>
+            </section>
+          )}
         </section>
       </main>
       <Footer />

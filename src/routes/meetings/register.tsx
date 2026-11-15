@@ -4,6 +4,8 @@ import { CalendarCheck2, CheckCircle2, Clock3, MapPin } from "lucide-react";
 
 import { Footer } from "@/components/site/Footer";
 import { Navbar } from "@/components/site/Navbar";
+import { HubSelect } from "@/components/site/HubSelect";
+import { useHubs } from "@/hooks/use-hubs";
 import { getChapter, getMeeting } from "@/data/chapterData";
 import { publicSupabase } from "@/lib/supabase";
 import { getUserFacingError } from "@/lib/reliability";
@@ -19,6 +21,9 @@ function MeetingRegistrationPage() {
   const { meeting: meetingId } = Route.useSearch();
   const selectedMeeting = getMeeting(meetingId);
   const chapter = selectedMeeting ? getChapter(selectedMeeting.chapterSlug) : undefined;
+  const hubsQuery = useHubs();
+  const hubs = hubsQuery.data ?? [];
+  const [selectedHub, setSelectedHub] = useState(chapter?.slug ?? "");
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -49,6 +54,15 @@ function MeetingRegistrationPage() {
     event.preventDefault();
 
     if (isSubmitting) return;
+    if (
+      !selectedMeeting ||
+      hubsQuery.isPending ||
+      hubsQuery.isError ||
+      !hubs.some((item) => item.id === selectedHub)
+    ) {
+      setSubmitError("Please select an available hub before registering.");
+      return;
+    }
 
     const form = event.currentTarget;
     const formData = new FormData(form);
@@ -78,6 +92,8 @@ function MeetingRegistrationPage() {
 
     try {
       const { error } = await publicSupabase.from("meeting_registrations").insert({
+        hub_id: selectedHub,
+        meeting_id: selectedMeeting.id,
         name,
         phone,
         email,
@@ -170,6 +186,16 @@ function MeetingRegistrationPage() {
                   </p>
 
                   <form onSubmit={handleSubmit} className="mt-8 grid gap-5">
+                    <HubSelect
+                      hubs={hubs}
+                      value={selectedHub}
+                      onChange={setSelectedHub}
+                      loading={hubsQuery.isPending}
+                      unavailable={hubsQuery.isError}
+                      onRetry={() => {
+                        void hubsQuery.refetch();
+                      }}
+                    />
                     <Field
                       id="meeting-name"
                       name="name"
@@ -250,7 +276,12 @@ function MeetingRegistrationPage() {
 
                     <button
                       type="submit"
-                      disabled={isSubmitting}
+                      disabled={
+                        isSubmitting ||
+                        hubsQuery.isPending ||
+                        hubsQuery.isError ||
+                        !hubs.some((item) => item.id === selectedHub)
+                      }
                       className="min-h-12 rounded-full bg-blue-600 px-7 text-sm font-black text-white transition hover:bg-blue-500 sm:w-fit"
                     >
                       {isSubmitting ? "Registering..." : "Complete Registration"}

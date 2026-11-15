@@ -12,7 +12,7 @@ const navigationItems = [
   },
   {
     label: "Startups",
-    href: "/startups/register",
+    href: "/startups",
   },
   {
     label: "Chapters",

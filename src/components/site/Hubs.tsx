@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowRight, CheckCircle2, Lightbulb, MapPin, Plus, Rocket, Users } from "lucide-react";
 
 import { chapters, type Chapter } from "@/data/chapterData";
+import { HubDataNotice } from "@/components/site/HubSelect";
+import { useHubs } from "@/hooks/use-hubs";
 
 type ChapterCardProps = Chapter & {
   delay: number;
@@ -113,6 +115,7 @@ function ChapterCard({
 }
 
 export function Hubs() {
+  const hubsQuery = useHubs();
   return (
     <section id="hubs" className="relative overflow-hidden py-14 sm:py-20 md:py-24">
       <div className="pointer-events-none absolute inset-0 dotted-bg opacity-40 [mask-image:radial-gradient(ellipse_at_center,black_50%,transparent_75%)]" />
@@ -150,6 +153,50 @@ export function Hubs() {
           {chapters.map((chapter, index) => (
             <ChapterCard key={chapter.slug} {...chapter} delay={index * 100} />
           ))}
+        </div>
+
+        <div className="mt-8 rounded-[24px] border border-slate-200 bg-white p-5 sm:p-7">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand">
+                Local hub teams
+              </p>
+              <h3 className="mt-2 text-xl font-bold text-foreground">
+                Find support at your regional hub
+              </h3>
+            </div>
+            <a
+              href="/hubs/"
+              className="inline-flex min-h-11 items-center gap-2 text-sm font-bold text-brand"
+            >
+              Explore all hubs <ArrowRight className="h-4 w-4" />
+            </a>
+          </div>
+          <HubDataNotice
+            loading={hubsQuery.isPending}
+            unavailable={hubsQuery.isError}
+            onRetry={() => {
+              void hubsQuery.refetch();
+            }}
+          />
+          {!hubsQuery.isPending && !hubsQuery.isError && (
+            <div className="mt-5 flex flex-wrap gap-3">
+              {hubsQuery.data?.map((hub) => (
+                <a
+                  key={hub.id}
+                  href={`/hubs/${hub.id}`}
+                  className="inline-flex min-h-11 items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-700 transition hover:border-blue-300 hover:text-blue-700"
+                >
+                  <MapPin className="h-4 w-4 text-brand" /> {hub.city}
+                </a>
+              ))}
+              {hubsQuery.data?.length === 0 && (
+                <p className="text-sm text-slate-600">
+                  Regional hub details will be available soon.
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="relative mt-9 overflow-hidden rounded-[24px] bg-[#081225] px-5 py-7 text-white shadow-[0_30px_85px_-50px_rgba(15,23,42,0.85)] sm:mt-10 sm:rounded-[28px] sm:px-8 sm:py-9 lg:px-10">

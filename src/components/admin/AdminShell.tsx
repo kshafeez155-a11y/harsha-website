@@ -8,11 +8,13 @@ import {
   FileText,
   Handshake,
   LayoutDashboard,
+  MapPin,
   Mail,
   LogOut,
   Menu,
   MessageSquare,
   Network,
+  Rocket,
   Settings,
   Users,
   X,
@@ -28,6 +30,8 @@ type AdminShellProps = {
 
 const navigation = [
   { label: "Dashboard", to: "/admin", icon: LayoutDashboard },
+  { label: "Hub Management", to: "/admin/hubs", icon: MapPin },
+  { label: "Manage Startups", to: "/admin/portfolio", icon: Rocket },
   { label: "Startup Applications", to: "/admin/startups", icon: Building2 },
   { label: "Chapter Applications", to: "/admin/chapters", icon: Network },
   { label: "Community Applications", to: "/admin/community", icon: Users },

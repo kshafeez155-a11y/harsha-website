@@ -52,6 +52,22 @@ if (!process.argv.includes("--submit")) {
   console.log("Read-only checks finished. Use --submit to create labelled diagnostic submissions.");
   process.exitCode = failures ? 1 : 0;
 } else {
+  const [hubsResult, eventsResult] = await Promise.all([
+    publicSupabase.from("hubs").select("id").order("id").limit(1),
+    publicSupabase
+      .from("hub_events")
+      .select("id, hub_id")
+      .eq("is_published", true)
+      .order("date")
+      .limit(1),
+  ]);
+  if (hubsResult.error || eventsResult.error || !hubsResult.data?.length) {
+    throw new Error(
+      "Hub diagnostics require migration 006 and at least one hub before creating test submissions.",
+    );
+  }
+  const diagnosticEvent = eventsResult.data?.[0];
+  const diagnosticHub = diagnosticEvent?.hub_id ?? hubsResult.data[0].id;
   const runId = randomUUID();
   const marker = `Hanova diagnostic ${runId}`;
   const email = `hanova-diagnostic-${runId}@example.invalid`;
@@ -73,6 +89,7 @@ if (!process.argv.includes("--submit")) {
       "community_join_applications",
       {
         ...person,
+        hub_id: diagnosticHub,
         district: "Diagnostic test",
         college_or_company: marker,
         profession: "other",
@@ -98,8 +115,31 @@ if (!process.argv.includes("--submit")) {
         consent_given: true,
       },
     ],
-    ["event_registrations", { ...person, purpose: text, consent_given: true }],
-    ["meeting_registrations", { ...person, role: "other", purpose: text, consent_given: true }],
+    ...(diagnosticEvent
+      ? [
+          [
+            "event_registrations",
+            {
+              ...person,
+              hub_id: diagnosticEvent.hub_id,
+              event_id: diagnosticEvent.id,
+              purpose: text,
+              consent_given: true,
+            },
+          ],
+        ]
+      : []),
+    [
+      "meeting_registrations",
+      {
+        ...person,
+        hub_id: diagnosticHub,
+        meeting_id: `diagnostic-${runId}`,
+        role: "other",
+        purpose: text,
+        consent_given: true,
+      },
+    ],
     [
       "partner_applications",
       {
@@ -134,6 +174,18 @@ if (!process.argv.includes("--submit")) {
       },
     ],
   ];
+
+  if (!diagnosticEvent) {
+    failures += 1;
+    console.log(
+      JSON.stringify({
+        check: "diagnostic-insert",
+        table: "event_registrations",
+        skipped: true,
+        message: "No published event is available. Publish an event before verifying registration.",
+      }),
+    );
+  }
 
   for (const [table, payload] of fixtures) {
     const result = await publicSupabase.from(table).insert(payload);
@@ -177,6 +229,7 @@ if (!process.argv.includes("--submit")) {
     await saveManifest();
     const table = "startup_registrations";
     const result = await publicSupabase.from(table).insert({
+      hub_id: diagnosticHub,
       startup_name: marker,
       founder_name: marker,
       problem: text,

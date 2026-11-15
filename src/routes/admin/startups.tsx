@@ -172,6 +172,12 @@ function StartupApplicationsPage() {
           </p>
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Startup Applications</h1>
           <p className="mt-2 text-sm text-slate-500">{applications.length} total applications</p>
+          <a
+            href="/admin/portfolio"
+            className="mt-2 inline-block text-sm font-semibold text-blue-700 underline underline-offset-4"
+          >
+            Manage startups shown on the website
+          </a>
         </div>
         <button
           type="button"

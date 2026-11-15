@@ -1,0 +1,4 @@
+[functions.manage-hub-manager]
+# The handler verifies the bearer session with Auth and the is_admin RPC.
+# This supports Supabase projects using the newer signing key format too.
+verify_jwt = false
